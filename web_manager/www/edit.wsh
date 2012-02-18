@@ -1,0 +1,283 @@
+#!/bin/wsh
+
+<?wsh
+   . conf.ini
+   name="$(wsh_input name)"
+   node="$(ls "$scenario_path/$name/play()")"
+   nb_script="$(ls "$scenario_path/$name/play()/$node" | wc -l)"
+   nb_machine="$(ls "$scenario_path/$name/play()/$node" | sed s/"^[0-9]*\."//g | sort | uniq | wc -l)"
+   uniq_machines="$(ls "$scenario_path/$name/play()/$node" | sed s/"^[0-9]*\."//g | sort | uniq | tr "\n" " ")"
+   machines="$(ls "$scenario_path/$name/play()/$node" | sort | tr "\n" " ")"
+   nodes="$(ls "$nodes_path" | sed s/"^[0-9]*\."//g | sort | uniq | tr "\n" " ")"
+   column_width="$(((100 / $nb_machine)-1))%"
+   ?>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+
+    <meta charset="utf-8">
+    <title>Scenario</title>
+
+    <link rel="stylesheet" href="css/jquery.ui.all.css">    
+    <link rel="stylesheet" href="css/codemirror.css">        
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="js/codemirror.js"></script>
+    <script src="js/shell.js"></script>
+    <script src="js/jquery-1.7.1.js"></script>
+    <script src="js/jquery.ui.core.js"></script>
+    <script src="js/jquery.ui.widget.js"></script>
+    <script src="js/jquery.ui.mouse.js"></script>
+    <script src="js/jquery.ui.sortable.js"></script>
+    <script src="js/jquery.ui.dialog.js"></script>
+    <script src="js/jquery.ui.draggable.js"></script>
+    <script src="js/jquery.ui.position.js"></script>
+    <script src="js/jquery.ui.resizable.js"></script>
+
+    <style>
+      .column { width: 100%; float: left; }
+      .portlet { margin: 0;  margin: 1em }
+      .machine_column {width: <?wsh echo -n "$column_width" ?> ; float: left; }
+      .machine_select {text-align: center; }
+      .sub_column {border: 1px solid; }
+      .sub_portlet { margin: 0; }
+      .hidden { visibility: hidden; }
+      #dialog-modal {font-size: 16px; }
+    </style>
+
+    <script>
+    var editor;
+    $(function()
+      {
+	  
+	  function open_modal_editor()
+	  {
+	      $("#dialog-modal").html('<textarea style="display: none;" id="code"></textarea>');
+	      var cur_sub_portlet = $(this);
+	      $("textarea#code").val($(this).find(".shell_script").val());
+	      $( "#dialog-modal" ).dialog(
+		  {
+		      position: 'center',
+		      height: 600,
+		      width: 800,
+		      modal: true,
+		      close: function(event, ui) 
+		      { 
+			  cur_sub_portlet.html('<textarea class="shell_script">'+editor.getValue()+'</textarea>');
+			  color_shell_script(cur_sub_portlet.find(".shell_script"));
+			  resize_all_div();
+		      }
+		  }
+	      );
+	      
+	      var editor = new CodeMirror.fromTextArea(document.getElementById('code'),
+						       {
+							   mode: 'shell',
+							   lineNumbers: true,
+							   matchBrackets: true
+						       });
+	  }
+
+	  function resize_all_div()
+	  {
+	      $('body').find(".sub_portlet").each(
+		  function()
+		  {
+		      var new_height = $(this).height();
+		      $(this).parent().parent().find(".sub_column").each(
+			  function()
+			  {
+			      $(this).height(new_height);
+			  }
+		      );
+		  }
+	      );
+	  }
+	  
+	  function color_shell_script(shell_script)
+	  {
+	      CodeMirror.fromTextArea(shell_script.get(0), {
+		  mode: 'shell',
+		  readOnly: true,
+		  matchBrackets: true
+	      });
+	  }
+	  
+	  function color_all_shell_scripts()
+	  {
+	      $('body').find(".shell_script").each(
+		  function()
+		  {
+		      color_shell_script($(this));
+		  }
+	      );
+	  }
+      
+	  $( ".column" ).sortable(
+	      {
+		  connectWith: ".column"
+	      });
+	  $( ".portlet" ).addClass( "ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" );
+	  $( ".column" ).disableSelection();
+	  
+	  
+	  <?wsh 
+	  for i in $(seq 1 $nb_script)
+	  do
+	  ?>
+	  $( ".sub_column<?wsh echo -n $i?>" ).sortable({ connectWith: ".sub_column<?wsh echo -n $i?>" });
+	  $( ".sub_column<?wsh echo -n $i?>" ).disableSelection();
+
+	  <?wsh
+          done
+	  ?>
+
+	  $( ".sub_portlet" ).addClass( "ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" );
+	  $( ".sub_portlet" ).dblclick(open_modal_editor);
+	  color_all_shell_scripts()
+	  $(window).resize(resize_all_div);
+	  resize_all_div();
+	  
+	  $(".remove_machine").click(function() 
+				     {
+					 save_scenario($(this).attr('name'));
+				     });
+	  
+	  function  save_scenario(remove_machine_id) 
+	  {
+	      remove_machine_id = typeof remove_machine_id !== 'undefined' ? remove_machine_id : 0;
+	      
+	      var post = new Object();
+	      var nb_col = $(this).find(".sub_column").length;
+	      var portlet_count = 0;
+	      $('body').find(".portlet").each(
+		  function()
+		  {
+		      portlet_count++;
+		      var sub_col_count = 0;
+		      $(this).find(".sub_column").each(
+			  function()
+			  {
+			      if ($(this).find(".shell_script").length && (sub_col_count + 1) != remove_machine_id) 
+			      {
+				  post["SCRIPT_" + portlet_count] = $("#name").val() + "\n" + $("#node").val() + "\n" + portlet_count + "." + $(".machine_select:eq("+sub_col_count+")").find("select").val() + "\n"  + $(this).find(".shell_script").text();
+			      }
+			      sub_col_count++;
+			  }
+		      );
+		  }
+	      );
+
+	      $.post("save.wsh", post,
+		     function(data) {
+			 self.location="edit.wsh?name="+$("#name").val()+"&ts="+new Date().getTime();
+		     });
+
+	  }
+	  $("#save").click(function(){save_scenario();});
+      });
+  </script>
+  </head>
+  <body>
+
+    <input type="text" id="name" value="<?wsh wsh_input name ?>">
+    <br/>
+    <select id="node">
+      <?wsh
+         for cur_node in $nodes  
+	 do
+	 ?>
+      <option <?wsh [[ "$cur_node" = "$node" ]] && echo -n "selected=selected" ?> value="<?wsh echo -n "$cur_node" ?>"><?wsh echo -n "$cur_node [$(cat "$nodes_path/$cur_node/ip")]" ?>
+      </option>
+      <?wsh
+	 done
+	 ?>
+    </select>
+    
+    <div class="demo">
+      <div>
+        <?wsh
+           i=0 
+	   for machine in $uniq_machines
+	   do
+  	     i=$(($i+1))
+	   ?>	
+	<div class="machine_column">
+	  <div class="machine_select">
+	    <select>
+              <?wsh 
+		 for cur_machine in $uniq_machines
+		 do
+		 ?>		 
+	      <option <?wsh [[ "$cur_machine" = "$machine" ]] && echo -n "selected=selected" ?>
+                      value="<?wsh echo -n "$cur_machine" ?>"><?wsh echo -n "$cur_machine" ?></option>
+              <?wsh
+                 done
+		 ?>
+	    </select> 
+	    <a href="#" name="<?wsh echo -n "$i" ?>" class="remove_machine">Remove</a>
+          </div>
+        </div>
+	
+        <?wsh
+           done
+           ?>
+
+      </div>
+
+      <div class="column">
+
+        <?wsh
+           i=0 
+	   for machine in $machines
+	   do
+           i=$(($i+1))
+	   ?>
+	<div class="portlet">
+          <?wsh 
+	     for cur_machine in $uniq_machines
+	     do
+	     ?>
+	  <div class="machine_column sub_column sub_column<?wsh echo -n $i?>">
+
+	    <?wsh
+	       if [[ "$(echo "$machine" | sed s/"^[0-9]*\."//g)" = "$cur_machine" ]]
+	       then
+	       ?>
+	    <div class="sub_portlet">
+	      <textarea class="shell_script"><?wsh cat "$scenario_path/$name/play()/$node/$machine/run" ?></textarea>
+
+	    </div>
+	    <?wsh 
+	       fi
+	       ?>
+
+	  </div>
+          <?wsh
+             done
+             ?>
+
+	</div>
+
+        <?wsh 
+	   done
+	   ?>
+
+
+      </div>
+    </div>
+
+    <div id="dialog-modal" title="Edit script">
+    </div>
+
+
+    <br/>
+    <br/>
+    <a id="save" href="#">Save</a>
+    <br/>
+    <br/>
+    <a href="list.wsh">List</a>
+
+  </body>
+</html>
