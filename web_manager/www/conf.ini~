@@ -1,6 +1,0 @@
-scenario_path=/root/code/flex/repository_builder/cloudy/scenarios
-scenario_stack_path=/root/code/flex/repository_builder/cloudy/stack
-scenario_running_path=/root/code/flex/repository_builder/cloudy/stack.running
-scenario_done_path=/root/code/flex/repository_builder/cloudy/stack.done
-cloudy_bin_path=/root/code/cloudy/web_manager/../bin
-
