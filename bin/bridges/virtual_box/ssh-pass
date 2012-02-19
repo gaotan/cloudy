@@ -1,0 +1,81 @@
+#!/usr/bin/env perl
+
+use POSIX qw(:sys_wait_h setsid);
+use Symbol;
+use strict;
+
+my $progname = $0;
+
+
+sub start
+{
+  my $pid = fork;
+  die "fork: $!" unless (defined $pid);
+  if ($pid == 0)
+    {
+      setsid ();
+      local $^W = 0;
+      exec (@_) || die "exec: $_[0]: $!\n\tDied";
+    }
+  return $pid;
+}
+
+sub exitstat
+{
+  my ($pid, $nowaitp) = @_;
+  my $result = waitpid ($pid, ($nowaitp? WNOHANG : 0));
+  return undef if (!defined $result || $result == -1);
+  return WEXITSTATUS ($?) if WIFEXITED   ($?);
+  return WTERMSIG    ($?) if WIFSIGNALED ($?);
+  return WSTOPSIG    ($?) if WIFSTOPPED  ($?);
+  return undef;
+}
+
+sub handle_subcall
+{
+  if ($ARGV[0] =~ m|yes/no|o)
+    {
+      print "yes\n";
+      return;
+    }
+  print $ENV{_ssp_data}."\n";
+}
+
+sub pkill
+{
+  my ($sig, $pid) = @_;
+  kill ($sig, -$pid);
+}
+
+sub main
+{
+  unless (@ARGV)
+    {
+      print STDERR "Usage: $0 [command {command args...}]\n";
+      exit (1);
+    }
+
+  unless ($progname =~ m|^/|)
+    {
+      use Cwd;
+      my $pwd = getcwd ();
+      $progname =~ s|^|$pwd/|;
+    }
+
+  return handle_subcall ()
+    if (exists $ENV{_ssp_data}
+        && exists $ENV{SSH_ASKPASS}
+        && $ENV{SSH_ASKPASS} eq $progname
+        && @ARGV == 1
+        && ! -t 1);
+  $ENV{DISPLAY} = "none." unless exists $ENV{DISPLAY};
+  $ENV{SSH_ASKPASS} = $progname;
+  $ENV{_ssp_data} = "generic";
+
+  my $pid = start (@ARGV);
+  my $sighandler = sub { pkill ($_[0], $pid); };
+  map { $SIG{$_} = $sighandler } qw(HUP INT QUIT TERM TSTP);
+  exit (exitstat ($pid));
+}
+
+main ();

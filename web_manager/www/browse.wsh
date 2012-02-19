@@ -1,0 +1,7 @@
+#!/usr/bin/env wsh
+
+<?wsh
+path="$(wsh_input path)"
+?>
+
+<?wsh cd "$path" ; tree -C -H . -T "$path" ?>

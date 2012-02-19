@@ -1,0 +1,17 @@
+#!/bin/ksh
+
+cd $(dirname $0)
+SCRIPT_PATH=$(pwd)
+
+file="$1"
+vm_name="$2"
+path="$3"
+
+echo "MACHINE NAME: $vm_name"
+echo "FILE: $file"
+echo "PATH: $path"
+vm_ip="192.168.56."$(($(echo "$vm_name" | cut -d : -f 3) + 100))
+echo "MACHINE IP: $vm_ip"
+echo BEFORE $SCRIPT_PATH/ssh-pass scp -r "$file" "$vm_ip:$path"
+$SCRIPT_PATH/ssh-pass scp -r "$file" "$vm_ip:$path"
+echo AFTER $SCRIPT_PATH/ssh-pass scp -r "$file" "$vm_ip:$path"

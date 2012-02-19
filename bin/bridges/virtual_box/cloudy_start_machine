@@ -1,0 +1,16 @@
+#!/bin/ksh
+
+cd $(dirname $0)
+SCRIPT_PATH=$(pwd)
+
+vm_name="$1"
+vm_ip="192.168.56."$(($(echo "$vm_name" | cut -d : -f 3) + 100))
+
+VBoxManage startvm --type headless "$vm_name"
+
+while [ 1 ]
+do
+    echo -n "^"
+    $SCRIPT_PATH/ssh-pass ssh "$vm_ip" id | grep root >/dev/null && break
+    sleep 1
+done

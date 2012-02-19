@@ -1,0 +1,111 @@
+#!/bin/ksh
+
+cloudy_copy_local_directory_ARG1_to_machine_ARG2_ARG3()
+{
+    path_from="$1"
+    machine="$2"
+    path_to="$3"
+
+    echo "COPY DIRECTORY [$path_from] TO [$machine] [$path_to]"
+    cloudy_copy_to_machine "$path_from" "$machine" "$path_to"
+}
+
+cloudy_run_command_ARG1_in_machine_ARG2()
+{
+    command="$1"
+    machine="$2"
+
+    echo "RUN COMMAND [$command] IN MACHINE [$machine]"
+    cloudy_run_command_in_machine "$command" "$machine"
+}
+
+cloudy_control_machine_ARG1_stop()
+{
+    machine="$1"
+
+    echo "STOP [$machine]"
+    cloudy_stop_machine "$machine"
+}
+
+cloudy_control_machine_ARG1_start()
+{
+    machine="$1"
+
+    echo "START [$machine]"
+    cloudy_start_machine "$machine"
+}
+
+cloudy_control_machine_ARG1_set_snapshot_ARG2()
+{
+    machine="$1"
+    snapshot="$2"
+
+    echo "SET [$machine] SNAPSHOT TO [$snapshot]"
+    cloudy_set_machine_snapshot "$machine" "$snapshot"
+}
+
+cloudy_control_machine_ARG1_set_snapshot_ARG2_and_start()
+{
+    machine="$1"
+    snapshot="$2"
+
+    echo "SET [$machine] SNAPSHOT TO [$snapshot]"
+    cloudy_set_machine_snapshot "$machine" "$snapshot"
+    cloudy_start_machine "$machine"
+}
+
+cloudy_control_machine()
+{
+    echo cloudy_control_machine
+}
+
+space="<---SPACE--->"
+commands+=("cloudy")
+bridge_path="$(dirname "$(readlink -f "$0")")/bridge"
+export PATH="$PATH:$bridge_path"
+
+echo "$bridge_path"
+
+while [ $# -gt 0 ]
+do
+    commands+=("$(echo "$1" | sed s/' '/"$space"/g)")
+    shift
+done
+
+for c in $(seq 0 $((${#commands[@]}-1)))
+do
+    unset sub_command
+
+    for i in $(seq 0 $((${#commands[@]}-1-$c)))
+    do
+	sub_command+=("${commands[$i]}")
+    done
+    cat "$0" | grep '^cloudy' | sed s/'()$'//g | sort -r | while read -r fct
+    do
+	fct_to_match="$(echo "$fct" | sed -e s/_/' '/g -e "s/ARG[0-9][0-9]*/.*/g")"
+	if echo "${sub_command[@]} " | grep -q "^$fct_to_match "
+	then
+	    i=0
+	    fct_args=("$fct")
+	    echo "$fct" | sed s/_/' '/g | tr ' ' '\n' | while read -r fct_part
+	    do
+		if echo "$fct_part" | grep -q "ARG[0-9][0-9]*$"
+		then
+		    fct_args+=("$(echo "${sub_command[$i]}" | sed s/"$space"/' '/g)")
+		fi
+		i=$(($i+1))
+	    done
+	    while [[ $i -lt $((${#commands[@]})) ]]
+	    do
+		fct_args+=("$(echo "${sub_command[$i]}" | sed s/"$space"/' '/g)")
+		i=$(($i+1))
+	    done	   
+	    echo CALL: "${fct_args[@]}"
+	    "${fct_args[@]}"
+	    exit $?
+	fi	    
+    done    
+done
+
+echo "usage: TODO: GENERATE USAGE..."
+exit 1

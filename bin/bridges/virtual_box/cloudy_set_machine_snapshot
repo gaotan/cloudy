@@ -1,0 +1,8 @@
+#!/bin/ksh
+
+vm_name="$1"
+snapshot="$2"
+
+VBoxManage controlvm "$vm_name" poweroff
+VBoxManage controlvm "$vm_name" poweroff
+VBoxManage snapshot "$vm_name" restore "$snapshot"
