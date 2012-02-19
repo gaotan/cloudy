@@ -1,4 +1,4 @@
-#!/usr/bin/env wsh
+#!/bin/wsh
 
 <pre>
 
@@ -6,22 +6,18 @@
 . conf.ini
 new_scenario_tmp_path="/tmp/.new_scenario.$$"
 
-env
-
 env | grep "^PARAM_SCRIPT" | cut -d "=" -f 2 | while read -r script
 do
   script="$(echo "$script" | wsh_urldecode)"
   name="$(echo "$script" | head -n 1 | tr " " "_" | tr "A-Z" "a-z")"
-  machine="$(echo "$script" | head -n 2 | tail -n 1)"
-  script="$(echo "$script" | sed 1,2d)"
+  node="$(echo "$script" | head -n 2 | tail -n 1)"
+  machine="$(echo "$script" | head -n 3 | tail -n 1)"
+  script="$(echo "$script" | sed 1,3d)"
 
-  if [[ -n "$name" ]]
+  if [[ -n "$name" && -n "$node" ]]
   then
-      mkdir -p "$new_scenario_tmp_path/$machine/play()/"
-      echo "$script" > "$new_scenario_tmp_path/$machine/play()/run"
-
-echo "$script"
-
+      mkdir -p "$new_scenario_tmp_path/$node/$machine"
+      echo "$script" > "$new_scenario_tmp_path/$node/$machine/run"
   fi
 done
 
@@ -33,5 +29,6 @@ then
 fi
 
 ?>
+
 </pre>
 

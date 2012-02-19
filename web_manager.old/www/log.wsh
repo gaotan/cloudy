@@ -1,19 +1,18 @@
-#!/usr/bin/env wsh
+#!/bin/wsh
 
 <?wsh
    . conf.ini
 
-   path="$(find $PARAM_path -name "*.log" -type f | sort -nr | head -n 1)"
-
-   if [[ -f "$path".html ]]
+   html_log="$(find $PARAM_path -name run_log.html)"  
+   if [[ -f "$html_log" ]]
    then
-      cat "$path".html
+      cat "$html_log"
       exit
    fi
 
    if [[ "$PARAM_get_log" = "true" ]]
    then
-
+      path="$(find $PARAM_path -name run_log.txt)"
       if [[ ! -f "$path" ]]
       then
           date

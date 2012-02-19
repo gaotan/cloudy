@@ -1,0 +1,15 @@
+#!/usr/bin/env wsh
+
+<pre>
+
+<?wsh
+   . conf.ini
+   name="$(wsh_input name)"
+   play_path="$scenario_stack_path/$(date "+%s")/$name"
+   mkdir -p "$play_path"
+   rmdir "$play_path"
+   cp -RL "$scenario_path/$name" "$play_path"
+?>
+
+</pre>
+

@@ -5,9 +5,7 @@ SCRIPT_ROOT=$(pwd)
 SCRIPT_PATH="$SCRIPT_ROOT/$(basename $0)"
 run_path="/tmp/.cloudy_web_server"
 
-export PATH="$PATH:$SCRIPT_ROOT/../bin"
-
-mkdir -p "$run_path/log"
+mkdir -p "$run_path"
 pkill -f "perl $run_path"
 
 echo "
@@ -15,9 +13,9 @@ port=8888
 addtype_cgi=internal/cgi
 addtype_wsh=internal/cgi
 realm=www server
-logfile=$run_path/log/serv.log
-errorlog=$run_path/log/serv.error
-pidfile=$run_path/log/serv.pid
+logfile=$SCRIPT_ROOT/log/serv.log
+errorlog=$SCRIPT_ROOT/log/serv.error
+pidfile=$SCRIPT_ROOT/log/serv.pid
 logtime=168
 ppath=
 ssl=0

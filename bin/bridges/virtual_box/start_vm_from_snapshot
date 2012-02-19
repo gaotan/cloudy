@@ -1,0 +1,24 @@
+#!/bin/ksh
+
+cd $(dirname $0)
+SCRIPT_PATH=$(pwd)
+
+vm_name="$1"
+	    
+echo "MACHINE NAME: $vm_name"
+
+vm_ip="192.168.56."$(($(echo "$vm_name" | cut -d : -f 3) + 100))
+    
+echo "MACHINE IP: $vm_ip"
+
+VBoxManage controlvm "$vm_name" poweroff
+VBoxManage controlvm "$vm_name" poweroff
+VBoxManage snapshot "$vm_name"  restore READY_TO_GO_SNAPSHOT
+VBoxManage startvm --type headless "$vm_name"
+
+while [ 1 ]
+do
+    echo -n "^"
+    $SCRIPT_PATH/ssh-pass ssh "$vm_ip" id | grep root >/dev/null && break
+    sleep 1
+done

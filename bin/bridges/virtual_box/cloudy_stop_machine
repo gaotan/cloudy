@@ -1,0 +1,6 @@
+#!/bin/ksh
+
+VBoxManage controlvm "$1" poweroff
+VBoxManage controlvm "$1" poweroff
+
+exit 0

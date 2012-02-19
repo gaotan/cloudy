@@ -1,4 +1,4 @@
-#!/bin/wsh
+#!/usr/bin/env wsh
 
 <?wsh
 . conf.ini
@@ -7,6 +7,6 @@
 <html>
 <frameset cols="50%,50%">
   <frame src="list.wsh" />
-  <frame src="http://127.0.0.1:8888/log.wsh?path=<?wsh echo -n "$scenario_running_path"?>" />
+  <frame src="log.wsh?path=<?wsh echo -n "$scenario_running_path"?>" />
 </frameset>
 </html>

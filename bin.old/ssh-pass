@@ -1,0 +1,264 @@
+#!/usr/bin/env perl
+# ssh-pass --- cache login password for underlying ssh sessions
+# Author: Noah Friedman <friedman@splode.com>
+# Created: 2003-02-13
+# Public domain.
+
+# $Id: ssh-pass,v 1.5 2010/01/15 00:50:28 friedman Exp $
+
+# Commentary:
+
+# The ssh-agent program can be used to perform public key authentication
+# without continually needing to provide a password for every connection.
+
+# But some routers and switches don't have any filesystem on which these
+# keys can be stored, even if they support the ssh protocol for
+# connections.  So you have to enter a login password every time unless
+# you disable passwords entirely.
+
+# This wrapper will store a single password and provide it to any
+# underlying ssh command invoked which resorts to "keyboard-interactive"
+# authentication, so that a password need only be entered once.
+
+# This wrapper works with OpenSSH.  It might work with other
+# implementations but probably it won't, unless they support the
+# SSH_ASKPASS environment variable.
+
+# Theory of operation:
+
+# Under certain circumstances, OpenSSH will use an external helper program
+# to query the user for a login password when one is required.  Normally it
+# will just request a password using the tty from which the command was
+# run, but sometimes the process may not have any controlling tty (e.g. if
+# launched via a gui menu option).  If the client has no controlling tty
+# but the DISPLAY environment variable is set (indicating an X terminal),
+# openssh will launch this helper program to read a password.  You can
+# control the helper application that is launched with the SSH_ASKPASS
+# environment variable.  You do not necessarily need to run a true X helper
+# application to query the password, though ssh will not run any program
+# unless DISPLAY is set.
+
+# When this program is launched, it reads a password from the terminal and
+# then stores the obfuscated result in an environment variable, and
+# arranges that if ssh invokes a helper application to read a password, it
+# launches this very program again.  Then it launches the application with
+# arguments specified on the command line.
+
+# If this program is run recursively via an ssh client, it will use the
+# data passed in the environment to supply the password that was previously
+# cached.
+
+# A example session might go something like this:
+#
+#     $ ssh-pass sh -c 'for host in oc mw gd; do echo -n $host:; ssh $host uptime; done'
+#     Password to use for ssh sessions:
+#     oc: 00:08:33 up 30 days,  9:04,  2 users,  load average: 0.10, 0.08, 0.01
+#     mw: 00:10:49 up 14 days,  2:29,  1 user,  load average: 0.23, 0.15, 0.10
+#     gd: 00:08:23 up 4 days,  4:22,  1 user,  load average: 0.03, 0.02, 0.01
+#     $
+#
+# This is in contrast to the non-wrapped variant:
+#
+#     $ for host in oc mw gd; do echo -n $host:; ssh $host uptime; done
+#     oc:noah@oc's password:
+#      00:09:37 up 30 days,  9:05,  2 users,  load average: 0.08, 0.07, 0.01
+#     mw:noah@mw's password:
+#      00:11:54 up 14 days,  2:30,  1 user,  load average: 0.14, 0.13, 0.09
+#     gd:noah@gd's password:
+#      00:09:29 up 4 days,  4:23,  1 user,  load average: 0.04, 0.03, 0.01
+#     $
+#
+
+# Code:
+
+$^W = 1;  # enable warnings
+
+use POSIX qw(:sys_wait_h setsid);
+use Symbol;
+use strict;
+
+my $progname = $0;
+
+sub getpass
+{
+  my ($prompt) = @_;
+  my $tty;
+  my $c_lflag;
+  my %trap_sigs = ( HUP  =>  1,
+                    INT  =>  2,
+                    QUIT =>  3,
+                    TERM => 15);
+  my %sig_orig;
+  my $fd = fileno (STDIN);
+
+  # If stdin is a tty, disable echo while reading password.
+  if (-t STDIN)
+    {
+      $tty = POSIX::Termios->new;
+      $tty->getattr ($fd);
+      $c_lflag = $tty->getlflag;
+
+      # Set up handlers to restore tty on typical signals
+      my $restore = sub {
+        $tty->setlflag ($c_lflag);
+        $tty->setattr ($fd);
+        my $signum = $trap_sigs{$_[0]};
+        print STDERR "\nExiting on signal $signum (SIG$_[0])\n";
+        # 7th bit set indicates lower 6 bits represent a
+        # signal number (0x80 == 2**7)
+        exit (0x80 | $signum);
+      };
+      map { $sig_orig{$_} = $SIG{$_} || 'DEFAULT';
+            $SIG{$_} = $restore
+          } keys %trap_sigs;
+
+      $tty->setlflag ($c_lflag & ~&POSIX::ECHO);
+      $tty->setattr ($fd);
+    }
+
+  # Temporarily disable buffering on stderr, which is where prompt is printed.
+  my $fh_orig = select (STDERR);
+  my $stderr_bufp = $|;
+  $| = 1;
+  $prompt = "Password:" unless defined $prompt;
+  print $prompt;
+  #########################my $input = <STDIN>;
+my $input = "generic";
+############################
+  chomp $input if defined $input;
+  $| = $stderr_bufp;
+  select ($fh_orig);
+
+  # Restore echo afterward, if it was originally on;
+  # and restore signal handlers
+  if ($tty)
+    {
+      print STDERR "\n";
+      $tty->setlflag ($c_lflag);
+      $tty->setattr ($fd);
+      map { $SIG{$_} = $sig_orig{$_} } keys %trap_sigs;
+    }
+
+  return $input;
+}
+
+sub start
+{
+  my $pid = fork;
+  die "fork: $!" unless (defined $pid);
+  if ($pid == 0) # child
+    {
+      # dissociate from controlling tty because openssh client will insist
+      # on reading password from controlling tty if it has one.
+      setsid ();
+      local $^W = 0; # turn off duplicate warning from die
+      exec (@_) || die "exec: $_[0]: $!\n\tDied";
+    }
+  return $pid;
+}
+
+sub exitstat
+{
+  my ($pid, $nowaitp) = @_;
+  my $result = waitpid ($pid, ($nowaitp? WNOHANG : 0));
+  return undef if (!defined $result || $result == -1);
+  return WEXITSTATUS ($?) if WIFEXITED   ($?);
+  return WTERMSIG    ($?) if WIFSIGNALED ($?);
+  return WSTOPSIG    ($?) if WIFSTOPPED  ($?);
+  return undef;
+}
+
+# These are not meant to be cryptographically secure; they are just meant
+# to obfuscate sensitive data so they are not discovered accidentally.
+
+sub scramble
+{
+  local $_ = shift;
+  tr/[\x00-\x7f][\x80-\xff]/[\x80-\xff][\x00-\x7f]/; # rot128
+  $_ = $_ ^ ("\xff" x length ($_));                  # invert bits
+  s/(.)/sprintf "%02x", ord($1)/ego;                 # base16-encode
+  return $_;
+}
+
+sub unscramble
+{
+  local $_ = shift;
+  s/(..)/chr hex $1/ego;                             # base16-decode
+  $_ = $_ ^ ("\xff" x length ($_));                  # invert bits
+  tr/[\x00-\x7f][\x80-\xff]/[\x80-\xff][\x00-\x7f]/; # rot128
+  return $_;
+}
+
+sub handle_subcall
+{
+  # We might be invoked to inquire whether or not to
+  # connect to a host for which we have no stored key;
+  # if that happens, inquire from user.
+  if ($ARGV[0] =~ m|yes/no|o)
+    {
+      print STDERR $ARGV[0];
+      my $ans = <STDIN>;
+      print $ans;
+      return;
+    }
+
+  print unscramble ($ENV{_ssp_data}), "\n";
+}
+
+sub pkill
+{
+  my ($sig, $pid) = @_;
+  # subprocess is the session leader via setsid; signal whole session
+  kill ($sig, -$pid);
+}
+
+sub main
+{
+  unless (@ARGV)
+    {
+      print STDERR "Usage: $0 [command {command args...}]\n";
+      exit (1);
+    }
+
+  unless ($progname =~ m|^/|)
+    {
+      use Cwd;
+      my $pwd = getcwd ();
+      $progname =~ s|^|$pwd/|;
+    }
+
+  # In order to determine whether this script is being invoked by the user
+  # or invoked recursively via ssh to fetch a password, we inspect several
+  # conditions:
+  #   * env var is set (containing password)
+  #   * ssh_askpass env var is set to this program
+  #   * 1 arg (a prompt) is passed from ssh client
+  #   * output is not a tty
+  #
+  # If any of these conditions fail, we assume this is a primary invocation
+  # and therefore query user for a password and launch a command.
+  return handle_subcall ()
+    if (exists $ENV{_ssp_data}
+        && exists $ENV{SSH_ASKPASS}
+        && $ENV{SSH_ASKPASS} eq $progname
+        && @ARGV == 1
+        && ! -t 1);
+
+  # If display is not already set, we must set it now or ssh will not
+  # invoke the askpass program.  Since we are performing a non-interactive
+  # response we don't really need a display.  We use an invalid display
+  # name to prevent any inadvertent grants of X access on remote hosts.
+  $ENV{DISPLAY} = "none." unless exists $ENV{DISPLAY};
+  $ENV{SSH_ASKPASS} = $progname;
+##########################  $ENV{_ssp_data} = scramble (getpass ("Password to use for ssh sessions: "));
+  $ENV{_ssp_data} = scramble (getpass (""));
+
+  my $pid = start (@ARGV);
+  my $sighandler = sub { pkill ($_[0], $pid); };
+  map { $SIG{$_} = $sighandler } qw(HUP INT QUIT TERM TSTP);
+  exit (exitstat ($pid));
+}
+
+main ();
+
+# ssh-pass ends here

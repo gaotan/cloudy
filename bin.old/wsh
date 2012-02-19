@@ -21,8 +21,8 @@ export PATH=".:$PATH"
 
 wsh_urldecode()
 {
-  string_to_decode="$(sed -e "s/%26/________wsh_ampersand________$$/g" -e "s/%5C/________wsh_backslash________$$/g" -e '"'"'s/%\(..\)/\\x\1/g;'"'"')"
-  echo a | sed s/a/"$string_to_decode"/ | sed -e "s/+/ /g" -e "s/________wsh_ampersand________$$/\&/g" -e "s/________wsh_backslash________$$/\\\\/g"
+  string_to_decode="$(sed '"'"'s/%\(..\)/\\x\1/g;'"'"')"
+  echo a | sed s/a/"$string_to_decode"/ | sed "s/+/ /g"
 }
 
 wsh_input()

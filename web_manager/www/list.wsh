@@ -1,9 +1,13 @@
-#!/bin/wsh
+#!/usr/bin/env wsh
+
+<?wsh
+. conf.ini
+?>
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-Equiv="refresh" content="15">
+    <meta http-Equiv="refresh" content="60">
     <meta charset="utf-8">
     <title>Scenario</title>
 
@@ -23,30 +27,51 @@
     <script src="js/jquery.ui.position.js"></script>
     <script src="js/jquery.ui.resizable.js"></script>
 
+    <script>
+    $(function()
+	{
+	    $(".play_scenario").click(function() {$.post("play.wsh?name=" + $(this).attr("name")); });
+	  
+	});
+    </script>
+
   </head>
   <body>
-   <h1>Scenarios List</h1>
 
+   <h1>Campaign List</h1>
    <?wsh
-      . conf.ini
-      (cd "$scenario_path" ; find -type d -name "play()") | while read -r cur_scenario_path
+      (cd "$scenario_path" ; find -type d -name "play()" | sed -e s!"^./"!!g -e "s,/play()$,,g" | grep -v "play()" | xargs -L 1 dirname) | sort | uniq | while read -r cur_campaign_path
       do
-      scenario="$(basename "$(echo "$(dirname "$cur_scenario_path")")")"
+	  echo "$cur_campaign_path"
+    ?>
+            <b><a class="play_scenario" href="#" name="<?wsh echo "$cur_campaign_path" ?>">[play]</a></b>
+	    <br/>
+    <?wsh         
+      done
    ?>
-      <a href="edit.wsh?name=<?wsh echo "$scenario" ?>"><?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?></a>        
-      <b><a href="play.wsh?name=<?wsh echo "$scenario" ?>">[play]</a></b>
-      <br/>
+
+   <h1>Scenario List</h1>
    <?wsh
+      (cd "$scenario_path" ; find -type d -name "play()") | sort | while read -r cur_scenario_path
+      do
+	  if [[ ! -f "$scenario_path/$cur_scenario_path/run" ]]
+	  then
+	      scenario="$(echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g)"
+   ?>
+            <a target="_blank" href="edit.wsh?name=<?wsh echo "$scenario" ?>"><?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?></a>        
+            <b><a class="play_scenario" href="#" name="<?wsh echo "$scenario" ?>">[play]</a></b>
+            <br/>
+   <?wsh
+          fi
       done
    ?>
 
 
-   <h1>Running Scenarios List</h1>
-   <a href="log.wsh?path=<?wsh echo "$scenario_running_path" ?>">View log</a><br/>
+   <h1>Running Scenario List</h1>
+   <a target="_blank" href="log.wsh?path=<?wsh echo "$scenario_running_path" ?>">View log</a><br/>
 
    <?wsh
-      . conf.ini
-      (cd "$scenario_running_path" ; find -type d -name "play()") | while read -r cur_scenario_path
+      (cd "$scenario_running_path"  ; find -type d -name "play()") | while read -r cur_scenario_path
       do
       scenario="$(basename "$(echo "$(dirname "$cur_scenario_path")")")"
    ?>
@@ -57,13 +82,14 @@
    ?>
 
 
-   <h1>Done Scenarios List</h1>
+   <h1>Done Scenario List</h1>
 
    <?wsh
-      . conf.ini
       (cd "$scenario_done_path" ; find -type d -name "play()") | while read -r cur_scenario_path
       do
-      scenario="$(basename "$(echo "$(dirname "$cur_scenario_path")")")"
+	  if [[ -f "$scenario_done_path/$cur_scenario_path/run" ]]
+	  then
+	      scenario="$(basename "$(echo "$(dirname "$cur_scenario_path")")")"
    ?>
 
       <?wsh 
@@ -83,14 +109,15 @@
       <?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?>
       </b>
 
-      <b><a target="blank" href="log.wsh?path=<?wsh echo "$scenario_done_path/$cur_scenario_path" ?>"> [Log] </a></b>
-      <b><a target="blank" href="browse.wsh?path=<?wsh echo "$scenario_done_path/$cur_scenario_path" ?>"> [browse] </a></b>
+      <b><a target="_blank" href="log.wsh?path=<?wsh echo "$scenario_done_path/$cur_scenario_path" ?>"> [Log] </a></b>
+      <b><a target="_blank" href="browse.wsh?path=<?wsh echo "$scenario_done_path/$cur_scenario_path" ?>"> [browse] </a></b>
       
 
       <br/>
-<!--      <a href="log.wsh?path=<?wsh echo "$scenario_done_path/$cur_scenario_path" ?>"><?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?></a>      <br/>
+<!--      <a target="_blank" href="log.wsh?path=<?wsh echo "$scenario_done_path/$cur_scenario_path" ?>"><?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?></a>      <br/>
 -->
    <?wsh
+      fi
       done
    ?>
 
@@ -98,14 +125,12 @@
    <h1>Scenarios Stack</h1>
 
    <?wsh
-      . conf.ini
       (cd "$scenario_stack_path" ; find -type d -name "play()") | while read -r cur_scenario_path
       do
       scenario="$(basename "$(echo "$(dirname "$cur_scenario_path")")")"
    ?>
 
       <?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?>
-      <pre><?wsh tree "$scenario_stack_path/$cur_scenario_path" ?></pre>
       <br/>
 
    <?wsh

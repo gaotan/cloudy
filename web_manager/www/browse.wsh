@@ -1,16 +1,7 @@
-#!/bin/wsh
+#!/usr/bin/env wsh
 
 <?wsh
 path="$(wsh_input path)"
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-  </head>
-  <body>
-    <pre>
-<?wsh tree "$path"?>
-    </pre>
-  </body>
-</html>
+<?wsh cd "$path" ; tree -C -H . -T "$path" ?>
