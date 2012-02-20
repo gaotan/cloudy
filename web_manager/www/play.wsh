@@ -1,15 +1,30 @@
 #!/usr/bin/env wsh
 
-<pre>
 
 <?wsh
    . conf.ini
+   . lib_cloudy.sh
+
    name="$(wsh_input name)"
    play_path="$scenario_stack_path/$(date "+%s")/$name"
-   mkdir -p "$play_path"
-   rmdir "$play_path"
-   cp -RL "$scenario_path/$name" "$play_path"
-?>
 
-</pre>
+   status=0
+   echo "{"
+   cloudy_search_scenario_variables "$scenario_path/$name" | while read -r var_name
+   do
+       if [[ -z "$(wsh_input "var_$var_name")" ]]
+       then
+	   status=$(($status+1))
+	   echo "\"var_$status\": \"$var_name\","       
+       fi
+   done
+   cloudy_list_default_scenario_variables "$scenario_path" "$name"
+   echo "\"status\": \"$status\""
+   echo "}"
+
+   if [[ "$status" -eq 0 ]]
+   then
+       cloudy_copy_scenario_and_replace_variables "$scenario_path/$name" "$play_path"
+   fi
+?>
 

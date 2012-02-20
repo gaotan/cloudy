@@ -41,7 +41,7 @@
     <style>
       .column { width: 100%; float: left; }
       .portlet { padding: 0.5em;  margin: 1em ; background: #EEEEEE;}
-      .machine_column {width: <?wsh echo -n "$column_width" ?> ; float: left; }
+      .machine_column {width: <?wsh wsh_echo "$column_width" ?> ; float: left; }
       .machine_select {text-align: center; }
       .sub_column { margin-bottom: .5em;  margin-top: .5em; }
       .sub_portlet { margin: 0; }
@@ -59,7 +59,7 @@
 	      $("#dialog-modal").html('<textarea style="display: none;" id="code"></textarea>');
 	      var cur_sub_portlet = $(this);
 	      $("textarea#code").val($(this).find(".shell_script").val());
-	      $( "#dialog-modal" ).dialog(
+	      $("#dialog-modal").dialog(
 		  {
 		      position: 'center',
 		      height: 600,
@@ -129,8 +129,8 @@
 	  for i in $(seq 1 $nb_script)
 	  do
 	  ?>
-	  $( ".sub_column<?wsh echo -n $i?>" ).sortable({ connectWith: ".sub_column<?wsh echo -n $i?>" });
-	  $( ".sub_column<?wsh echo -n $i?>" ).disableSelection();
+	  $( ".sub_column<?wsh wsh_echo $i?>" ).sortable({ connectWith: ".sub_column<?wsh wsh_echo $i?>" });
+	  $( ".sub_column<?wsh wsh_echo $i?>" ).disableSelection();
 
 	  <?wsh
           done
@@ -225,18 +225,23 @@
 	  <div class="machine_column">
 	    <div class="machine_select">
 	      <select>
+		<option selected=selected value="<?wsh wsh_echo "$machine" ?>"><?wsh wsh_echo "$machine" ?></option>
+
 		<?wsh 
 		   for cur_machine in $reachable_machines
 		   do
-		   ?>		 
-		<option <?wsh [[ "$cur_machine" = "$machine" ]] && echo -n "selected=selected" ?>
-			value="<?wsh echo -n "$cur_machine" ?>"><?wsh echo -n "$cur_machine" ?></option>
+		       if  [[ "$cur_machine" != "$machine" ]]
+		       then
+		?>
+  		<option value="<?wsh wsh_echo "$cur_machine" ?>"><?wsh wsh_echo "$cur_machine" ?></option>		 
 		<?wsh
+		       fi
 		   done
-		   ?>
+		?>
+
 	      </select> 
 	      
-	      <a href="#" name="<?wsh echo -n "$i" ?>" class="remove_machine">Remove</a>
+	      <a href="#" name="<?wsh wsh_echo "$i" ?>" class="remove_machine">Remove</a>
             </div>
           </div>
 	
@@ -256,7 +261,7 @@
 	       for cur_machine in $uniq_machines
 	       do
 	    ?>
-	    <div class="machine_column sub_column sub_column<?wsh echo -n $i?>">
+	    <div class="machine_column sub_column sub_column<?wsh wsh_echo $i?>">
 
 	      <?wsh if [[ "$(echo "$machine" | sed s/"^[0-9]*\."//g)" = "$cur_machine" ]] ; then ?>
 	      <div class="sub_portlet">
@@ -292,8 +297,8 @@
        for cur_machine in $reachable_machines
        do
        ?>		 
-       <option <?wsh [[ "$cur_machine" = "$machine" ]] && echo -n "selected=selected" ?>
-	    value="<?wsh echo -n "$cur_machine" ?>"><?wsh echo -n "$cur_machine" ?></option>
+       <option <?wsh [[ "$cur_machine" = "$machine" ]] && wsh_echo "selected=selected" ?>
+	    value="<?wsh wsh_echo "$cur_machine" ?>"><?wsh wsh_echo "$cur_machine" ?></option>
     <?wsh
        done
     ?>

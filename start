@@ -1,0 +1,11 @@
+#!/bin/ksh
+
+cd $(dirname $0)
+
+rm /bin/cloudy
+ln -s "$(readlink -f ./bin/cloudy)" /bin/cloudy
+
+./web_manager/start_cloudy_web_server 
+
+echo cloudy is ready
+
