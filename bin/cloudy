@@ -1,5 +1,15 @@
 #!/bin/ksh
 
+cloudy_copy_local_file_ARG1_to_machine_ARG2_ARG3()
+{
+    path_from="$1"
+    machine="$2"
+    path_to="$3"
+
+    echo "COPY FILE [$path_from] TO [$machine] [$path_to]"
+    cloudy_copy_to_machine "$path_from" "$machine" "$path_to"
+}
+
 cloudy_copy_local_directory_ARG1_to_machine_ARG2_ARG3()
 {
     path_from="$1"
@@ -8,6 +18,16 @@ cloudy_copy_local_directory_ARG1_to_machine_ARG2_ARG3()
 
     echo "COPY DIRECTORY [$path_from] TO [$machine] [$path_to]"
     cloudy_copy_to_machine "$path_from" "$machine" "$path_to"
+}
+
+cloudy_copy_directory_ARG1_from_machine_ARG2_to_local_ARG3()
+{
+    path_from="$1"
+    machine="$2"
+    path_to="$3"
+
+    echo "COPY DIRECTORY [$machine] [$path_from] TO [$path_to]"
+    cloudy_copy_from_machine "$path_from" "$machine" "$path_to"
 }
 
 cloudy_run_command_ARG1_in_machine_ARG2()

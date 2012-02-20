@@ -12,6 +12,7 @@ pkill -f "perl $run_path"
 
 echo "
 port=8888
+allow=127.0.0.1
 addtype_cgi=internal/cgi
 addtype_wsh=internal/cgi
 realm=www server

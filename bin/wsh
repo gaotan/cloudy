@@ -30,4 +30,9 @@ wsh_input()
    eval "echo \$PARAM_$1"
 }
 
+wsh_echo()
+{
+   echo -n "$*" | sed -e "s/</\&lt;/g" -e "s/>/\&gt;/g" 
+}
+
 ' ; sed 1d "$SCRIPT_FILENAME" | tr '\n' '霞' | sed -e s/'<?wsh'/'\x0A<?wsh'/g  -e s/'?>'/'?>\x0A'/g | sed -e s/"'"/"'\"'\"'"/g -e s/'^'/"echo -n '"/g -e s/'$'/"'"/g -e s/"^echo -n '<?wsh"//g -e s/"?>'$"//g | tr '霞' '\n') | ksh
