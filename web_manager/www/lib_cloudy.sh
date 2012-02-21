@@ -72,8 +72,12 @@ cloudy_list_default_scenario_variables()
     rm -rf "$tmp_var_path"
     mkdir -p "$tmp_var_path"
 
-    cp -P "$cur_path/variables()/"* "$tmp_var_path/."
-    echo "$2" | tr '/' '\n' | while read -r path
+    find "$cur_path/$2" -type d -name 'variables()' | while read -r var_path
+    do
+	cp -P "$var_path/"* "$tmp_var_path/."
+    done
+
+    echo "/$2" | tr '/' '\n' | while read -r path
     do
 	cur_path="$cur_path/$path"
 	cp -P "$cur_path/variables()/"* "$tmp_var_path/."
