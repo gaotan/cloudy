@@ -1,28 +1,61 @@
 #!/bin/ksh
 
+wsh_convert_to_ksh()
+{
+    sed 1d "$1" | tr '\n' '霞' | sed -e s/'<?wsh'/'\x0A<?wsh'/g  -e s/'?>'/'?>\x0A'/g | sed -e s/"'"/"'\"'\"'"/g -e s/'^'/"echo -n '"/g -e s/'$'/"'"/g -e s/"^echo -n '<?wsh"//g -e s/"?>'$"//g | tr '霞' '\n'
+}
+
+if [[ "$2" = "--convert" ]]
+then
+    wsh_convert_to_ksh "$1"
+    exit
+fi
+
 echo "Content-type: text/html"
 echo
 echo
 
+if [[ "$REQUEST_METHOD" = "POST" ]]
+then
+    echo "$(< /dev/stdin)" | tr '&' '\n' | while read -r kv
+    do
+	if [[ -n "$kv" ]]
+	then
+	    export "PARAM_$kv"
+	fi
+    done
+fi
 
-echo "$(< /dev/stdin)&$QUERY_STRING" | tr '&' '\n' | while read -r kv
-do
-    if [[ -n "$kv" ]]
-    then
-	export "PARAM_$kv"
-    fi
-done
+if [[ -n "$QUERY_STRING" ]]
+then
+    echo "$QUERY_STRING" | tr '&' '\n' | while read -r kv
+    do
+	if [[ -n "$kv" ]]
+	then
+	    export "PARAM_$kv"
+	fi
+    done
+fi
+
+#$SCRIPT_FILENAME -> $1
 
 (echo '
 
-cd '"$(dirname "$SCRIPT_FILENAME")"'
+cd '"$(dirname "$1")"'
 
 export PATH=".:$PATH"
 
+wsh_include()
+{
+   wsh "$1" --convert > /tmp/.wsh_include_$$
+   . /tmp/.wsh_include_$$
+   rm -f /tmp/.wsh_include_$$
+}
+
 wsh_urldecode()
 {
-  string_to_decode="$(sed -e "s/%26/________wsh_ampersand________$$/g" -e "s/%5C/________wsh_backslash________$$/g" -e '"'"'s/%\(..\)/\\x\1/g;'"'"')"
-  echo a | sed s/a/"$string_to_decode"/ | sed -e "s/+/ /g" -e "s/________wsh_ampersand________$$/\&/g" -e "s/________wsh_backslash________$$/\\\\/g"
+  string_to_decode="$(sed -e "s/%2B/________wsh_plus________$$/g" -e "s/%26/________wsh_ampersand________$$/g" -e "s/%5C/________wsh_backslash________$$/g" -e '"'"'s/%\(..\)/\\x\1/g;'"'"')"
+  echo a | sed s/a/"$string_to_decode"/ | sed -e "s/+/ /g" -e "s/________wsh_ampersand________$$/\&/g" -e "s/________wsh_backslash________$$/\\\\/g" -e "s/________wsh_plus________$$/+/g"
 }
 
 wsh_input()
@@ -35,4 +68,5 @@ wsh_echo()
    echo -n "$*" | sed -e "s/</\&lt;/g" -e "s/>/\&gt;/g" 
 }
 
-' ; sed 1d "$SCRIPT_FILENAME" | tr '\n' '霞' | sed -e s/'<?wsh'/'\x0A<?wsh'/g  -e s/'?>'/'?>\x0A'/g | sed -e s/"'"/"'\"'\"'"/g -e s/'^'/"echo -n '"/g -e s/'$'/"'"/g -e s/"^echo -n '<?wsh"//g -e s/"?>'$"//g | tr '霞' '\n') | ksh
+' ; wsh_convert_to_ksh "$1" ) | ksh
+

@@ -1,0 +1,119 @@
+#!/usr/bin/env wsh
+
+<?wsh
+wsh_include "conf.wsh"
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <?wsh
+    if [[ -n "$page_refresh" ]] ; then
+    ?>
+    <meta http-Equiv="refresh" content="<?wsh echo -n "$page_refresh" ?>">
+    <?wsh
+    fi
+    ?>
+    <meta charset="utf-8">
+    <title><?wsh echo "$page_title" ?></title>
+
+    <link rel="stylesheet" href="css/jquery.ui.all.css">    
+    <link rel="stylesheet" href="css/codemirror.css">        
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cloudy.css">
+
+    <script src="js/codemirror.js"></script>
+    <script src="js/shell.js"></script>
+    <script src="js/jquery-1.7.1.js"></script>
+    <script src="js/jquery.ui.core.js"></script>
+    <script src="js/jquery.ui.widget.js"></script>
+    <script src="js/jquery.ui.mouse.js"></script>
+    <script src="js/jquery.ui.sortable.js"></script>
+    <script src="js/jquery.ui.dialog.js"></script>
+    <script src="js/jquery.ui.draggable.js"></script>
+    <script src="js/jquery.ui.position.js"></script>
+    <script src="js/jquery.ui.resizable.js"></script>
+
+    <script>
+    $(function()
+	{
+	    function play_scenario()
+	    {
+		var play_scenario_name = $(this).attr("name");
+		var play_scenario_query_string = "name=" + play_scenario_name;
+
+		$(".play_scenario").hide();
+		$("#dialog-modal-var").find(".dialog-modal-select").each(function(){
+			play_scenario_query_string += "&var_" + $(this).attr("name") + "=" + $(this).val();
+			});
+		$("#dialog-modal-var").dialog('close');
+		$("#dialog-modal-var").html("");
+		$.getJSON("play.wsh?" + play_scenario_query_string, function(data) {
+
+			if (data["status"] > 0)
+			    {
+				var dialog_html = "";
+				$.each(data, function(key, val) 
+				    {
+					if (key.match(/^var_/))
+					    {
+						dialog_html += val + "<br/>";
+						var default_values = data["default_" + val];
+
+						if (typeof default_values === "undefined") 
+						{
+						    dialog_html += "default_value is undefined";
+						}
+						else
+						{
+						    dialog_html += '<select name="' + val + '" class="dialog-modal-select">';
+						    for(var i= 0; i < default_values.length; i++)
+						    {
+							dialog_html += '<option value="' + default_values[i] + '">' + default_values[i] + '</option>';
+						    }
+						    dialog_html += "</select>";
+						}
+						dialog_html += "<br/><br/>";
+					    }
+					    });
+				dialog_html += '<a name="' + play_scenario_name + '" id="dialog_modal_play_scenario" href="#">Play</a>';
+				$("#dialog-modal-var").html(dialog_html);
+				$("#dialog_modal_play_scenario").click(play_scenario);
+				$(".play_scenario").hide();
+				$("#dialog-modal-var").dialog(
+				    {
+					position: 'center',
+					width: 'auto',
+					modal: true,
+					close: function(event, ui)
+					{
+					    $("#dialog-modal-var").html("");
+					    $(".play_scenario").show();
+					}
+				    }
+				);
+			    }
+			else
+			    {
+				$(".play_scenario").show();			
+			    }
+			    
+			    });
+	    }
+	    $(".play_scenario").click(play_scenario);	  
+	});
+    </script>
+
+  </head>
+  <body>
+    <header>
+      <nav>
+        <ul id="menu">
+          <li><a href="campaigns.wsh">Campaigns</a></li>
+          <li><a href="scenarios.wsh">Available Scenarios</a></li>
+          <li><a href="stack.wsh">Stacked Scenarios</a></li>
+          <li><a href="running.wsh">Running Scenario</a></li>
+          <li><a href="finished.wsh">Finished Scenarios</a></li>
+        </ul>
+      </nav>
+    </header>

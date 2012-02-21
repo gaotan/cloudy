@@ -5,7 +5,6 @@ SCRIPT_PATH=$(pwd)
 
 cmd="$1"
 vm_name="$2"
+vm_ip="$(cloudy get machine ip "$vm_name")"
 
-vm_ip="192.168.56."$(($(echo "$vm_name" | cut -d : -f 3) + 100))
-echo "MACHINE IP: $vm_ip"
-$SCRIPT_PATH/ssh-pass  ssh "$vm_ip" "$cmd" 2>&1
+$SCRIPT_PATH/ssh-pass ssh "root@$vm_ip" "$cmd" 2>&1

@@ -1,12 +1,12 @@
 #!/usr/bin/env wsh
 
 <?wsh
-. conf.ini
+wsh_include "conf.wsh"
 ?>
 
 <html>
 <frameset cols="50%,50%">
-  <frame src="list.wsh" />
+  <frame src="campaigns.wsh" />
   <frame src="log.wsh?path=<?wsh echo -n "$scenario_running_path"?>" />
 </frameset>
 </html>

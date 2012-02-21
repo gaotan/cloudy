@@ -1,0 +1,29 @@
+#!/usr/bin/env wsh
+
+<?wsh
+page_title="Campaigns"
+wsh_include "header.wsh"
+?>
+
+  <h1>Campaigns</h1>
+  <ol>
+  <?wsh
+      (cd "$scenario_path" ; echo * ; find -type d -name "play()" | sed -e "s,^./,,g" -e "s,/play()$,,g" | grep -v "play()" | xargs -L 1 dirname) | sort | uniq | while read -r cur_campaign_path
+      do
+  ?>
+  <li>
+  <?wsh
+	  echo "$cur_campaign_path"
+  ?>
+          <a class="play_scenario button-inline" href="#" name="<?wsh echo "$cur_campaign_path" ?>">Play</a></li>
+  <?wsh         
+     done
+  ?>
+  </ol>
+  
+  <div id="dialog-modal-var" title="Set Variables">
+  </div>
+
+<?wsh
+wsh_include "footer.wsh"
+?>

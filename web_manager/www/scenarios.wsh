@@ -1,0 +1,38 @@
+#!/usr/bin/env wsh
+
+<?wsh
+page_title="Available scenarios"
+page_refresh="360"
+wsh_include "header.wsh"
+query="$(wsh_input q)"
+?>
+
+   <h1>Available Scenarios</h1>
+   <form method="GET">
+      <fieldset style="border: none; border-top: 1px dotted #888">
+          <legend>Filter</legend>
+         <input name="q" value="<?wsh echo "$query" ?>" type="text" /> <input name="search" type="submit" value="OK" />
+      </fieldset>
+   </form>
+   <ol>
+   <?wsh
+      (cd "$scenario_path" ; find -type d -name "play()") | grep "$query" | sort | while read -r cur_scenario_path
+      do
+	  if [[ ! -f "$scenario_path/$cur_scenario_path/run" ]]
+	  then
+	      scenario="$(echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g)"
+   ?>
+            <li><a target="_blank" href="edit.wsh?name=<?wsh echo "$scenario" ?>"><?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?></a>        
+            <a class="play_scenario button-inline" href="#" name="<?wsh echo "$scenario" ?>">Play</a></li>
+   <?wsh
+          fi
+      done
+   ?>
+   </ol>
+
+   <div id="dialog-modal-var" title="Set Variables">
+   </div>
+
+<?wsh
+wsh_include "footer.wsh"
+?>

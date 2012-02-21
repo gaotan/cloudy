@@ -1,7 +1,7 @@
 #!/usr/bin/env wsh
 
 <?wsh
-   . conf.ini
+   wsh_include "conf.wsh"
 
    path="$(find $PARAM_path -name "*.log" -type f | sort -nr | head -n 1)"
 

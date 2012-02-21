@@ -1,0 +1,28 @@
+#!/usr/bin/env wsh
+
+<?wsh
+wsh_include "conf.wsh"
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-Equiv="refresh" content="2;url=finished.wsh">
+    <meta charset="utf-8">
+    <title>Purge finished scenario</title>
+  </head>
+  <body>
+
+   <h1>Purging Finished Scenarios</h1>
+   <p>Please wait...</p>
+
+   <?wsh
+      (
+      if [[ -n "$scenario_done_path" ]] ; then
+           rm -rf "$scenario_done_path"/1*
+      fi
+      )
+   ?>
+
+  </body>
+</html>

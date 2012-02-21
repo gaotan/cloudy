@@ -1,0 +1,7 @@
+#!/usr/bin/env wsh
+
+    <footer>
+      <p>Powered by Cloudy.</p>
+    </footer>
+  </body>
+</html>

@@ -1,8 +1,7 @@
 #!/usr/bin/env wsh
 
-
 <?wsh
-   . conf.ini
+   wsh_include "conf.wsh"
    . lib_cloudy.sh
 
    name="$(wsh_input name)"

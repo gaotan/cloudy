@@ -1,0 +1,73 @@
+#!/usr/bin/env wsh
+
+<?wsh
+page_title="Finished Scenarios"
+page_refresh="60"
+wsh_include "header.wsh"
+?>
+
+   <h1>Finished Scenarios</h1>
+
+   <ol id="list-finished">
+   <?wsh
+      (cd "$scenario_done_path" ; find -type d -name "play()" | sort -n) | while read -r cur_scenario_path
+      do
+	  if [[ -f "$scenario_done_path/$cur_scenario_path/run" ]]
+	  then
+              scenario="$(basename "$(echo "$(dirname "$cur_scenario_path")")")"
+   ?>
+
+   <?wsh 
+              cur_scenario_exit_code="$(cat "$(find "$scenario_done_path/$cur_scenario_path" -name run.exit_code)")"
+              if [[ "$cur_scenario_exit_code" = 0 ]]
+              then
+                 css_status="status-ok"
+	      else
+                 css_status="status-ko"
+	     fi
+   ?>
+      
+   <?wsh
+             contains_first=$(echo "$scenario" | grep "1.")
+             if [[ -n "$contains_first" ]] ; then
+   ?>
+                <li><span class="finished-scenario">
+   <?wsh
+                echo "$cur_scenario_path" | sed -e s!"/play()$"!!g -e s!/play\(\)/$scenario!! | cut -d"/" -f"4-"
+   ?>
+                </span><p>Started at <strong>
+   <?wsh           
+                date --date "@""$(echo "$cur_scenario_path" | awk -F "/" "{print \$2}")" "+%d-%m-%Y %H:%M:%S"
+   ?>
+                </strong> | Finished at <strong>
+   <?wsh
+                date --date "@""$(echo "$cur_scenario_path" | awk -F "/" "{print \$3}")" "+%d-%m-%Y %H:%M:%S"
+   ?> 
+                </strong></p>
+   <?wsh
+                echo "<p class=\"sub-scenario $css_status\">$scenario"
+             else
+                echo "<p class=\"sub-scenario $css_status\">$scenario"
+             fi
+   ?>
+             <a class="button-inline" target="_blank" href="log.wsh?path=<?wsh echo "$scenario_done_path/$cur_scenario_path" ?>">Log</a>
+             <a class="button-inline" target="_blank" href="browse.wsh?path=<?wsh echo "$scenario_done_path/$cur_scenario_path" ?>">browse</a>
+             </p>
+      
+   <?wsh
+            fi
+      done
+   ?>
+   </ol>
+
+
+   <p class="button-bar">
+     <a href="purge-finished.wsh" title="Purge all finished scenarios">Purge all</a>
+   </p>
+
+    <div id="dialog-modal-var" title="Set Variables">
+    </div>
+
+<?wsh
+wsh_include "footer.wsh"
+?>

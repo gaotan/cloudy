@@ -1,90 +1,207 @@
 #!/bin/ksh
 
+###########################################################
+#                 CLOUDY PUBLIC METHODS                   #
+###########################################################
+
+cloudy_register_machine_ARG1_ARG2_ARG3()
+{
+    machine_name="$1"
+    machine_ip="$2"
+    root_password="$3"
+    snapshot_name="$4"
+
+    export CLOUDY_MACHINE_PASSWORD="$root_password"
+    cloudy_wait_machine "$machine_name" "$machine_ip" "$root_password"
+    _cloudy_db_set "machines/$machine_name/ip" "$machine_ip"
+    _cloudy_db_set "machines/$machine_name/password" "$root_password"
+}
+
+cloudy_sshpass()
+{
+    ssh-pass $*
+}
+
+cloudy_ssh_ARG1()
+{
+    machine_name="$1"
+
+    export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"  
+    shift
+    ssh-pass ssh "$(_cloudy_db_get "machines/$machine_name/ip")" $*
+}
+
+cloudy_drop_machine_ARG1()
+{
+    machine_name="$1"
+
+    _cloudy_db_remove "machines/$machine_name"
+}
+
+cloudy_list_registered_machines()
+{
+    _cloudy_db_get "machines"
+}
+
+cloudy_get_machine_ARG1_ip()
+{
+    machine_name="$1"
+    
+    _cloudy_db_get "machines/$machine_name/ip"
+}
+
+cloudy_take_snapshot_named_ARG1_on_machine_ARG2()
+{
+    snapshot_name="$1"
+    machine_name="$2"
+
+    cloudy_take_machine_snapshot "$machine_name" "$snapshot_name"
+}
+
+cloudy_create_new_machine_named_ARG1_using_vmdk_ARG2_and_take_a_snapshot_named_ARG3_when_root_password_is_ARG4()
+{
+    machine_name="$1"
+    vmdk_path="$2"
+    snapshot_name="$3"
+    root_password="$4"
+}
+
 cloudy_copy_local_file_ARG1_to_machine_ARG2_ARG3()
 {
     path_from="$1"
-    machine="$2"
+    machine_name="$2"
     path_to="$3"
 
-    echo "COPY FILE [$path_from] TO [$machine] [$path_to]"
-    cloudy_copy_to_machine "$path_from" "$machine" "$path_to"
+    export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"
+    echo "COPY FILE [$path_from] TO [$machine_name] [$path_to]"
+    cloudy_copy_to_machine "$path_from" "$machine_name" "$path_to"
 }
 
 cloudy_copy_local_directory_ARG1_to_machine_ARG2_ARG3()
 {
     path_from="$1"
-    machine="$2"
+    machine_name="$2"
     path_to="$3"
 
-    echo "COPY DIRECTORY [$path_from] TO [$machine] [$path_to]"
-    cloudy_copy_to_machine "$path_from" "$machine" "$path_to"
+    export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"
+    echo "COPY DIRECTORY [$path_from] TO [$machine_name] [$path_to]"
+    cloudy_copy_to_machine "$path_from" "$machine_name" "$path_to"
 }
 
 cloudy_copy_directory_ARG1_from_machine_ARG2_to_local_ARG3()
 {
     path_from="$1"
-    machine="$2"
+    machine_name="$2"
     path_to="$3"
 
-    echo "COPY DIRECTORY [$machine] [$path_from] TO [$path_to]"
-    cloudy_copy_from_machine "$path_from" "$machine" "$path_to"
+    export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"
+    echo "COPY DIRECTORY [$machine_name] [$path_from] TO [$path_to]"
+    cloudy_copy_from_machine "$path_from" "$machine_name" "$path_to"
+}
+
+cloudy_get_machine_ip_ARG1()
+{
+    machine_name="$1"
+
+    _cloudy_db_get "machines/$machine_name/ip"
 }
 
 cloudy_run_command_ARG1_in_machine_ARG2()
 {
     command="$1"
-    machine="$2"
+    machine_name="$2"
 
-    echo "RUN COMMAND [$command] IN MACHINE [$machine]"
-    cloudy_run_command_in_machine "$command" "$machine"
+    export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"
+    echo "RUN COMMAND [$command] IN MACHINE [$machine_name]"
+    cloudy_run_command_in_machine "$command" "$machine_name"
 }
 
 cloudy_control_machine_ARG1_stop()
 {
-    machine="$1"
+    machine_name="$1"
 
-    echo "STOP [$machine]"
-    cloudy_stop_machine "$machine"
+    echo "STOP [$machine_name]"
+    cloudy_stop_machine "$machine_name"
 }
 
 cloudy_control_machine_ARG1_start()
 {
-    machine="$1"
+    machine_name="$1"
 
-    echo "START [$machine]"
-    cloudy_start_machine "$machine"
+    echo "START [$machine_name]"
+    export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"
+    cloudy_start_machine "$machine_name"
 }
 
 cloudy_control_machine_ARG1_set_snapshot_ARG2()
 {
-    machine="$1"
+    machine_name="$1"
     snapshot="$2"
 
-    echo "SET [$machine] SNAPSHOT TO [$snapshot]"
-    cloudy_set_machine_snapshot "$machine" "$snapshot"
+    echo "SET [$machine_name] SNAPSHOT TO [$snapshot]"
+    cloudy_set_machine_snapshot "$machine_name" "$snapshot"
 }
 
 cloudy_control_machine_ARG1_set_snapshot_ARG2_and_start()
 {
-    machine="$1"
+    machine_name="$1"
     snapshot="$2"
+    machine_ip="$(_cloudy_db_get "machines/$machine_name/ip")"
 
-    echo "SET [$machine] SNAPSHOT TO [$snapshot]"
-    cloudy_set_machine_snapshot "$machine" "$snapshot"
-    cloudy_start_machine "$machine"
+    echo "SET [$machine_name] SNAPSHOT TO [$snapshot]"
+    export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"
+    cloudy_stop_machine "$machine_name"
+    cloudy_set_machine_snapshot "$machine_name" "$snapshot"
+    cloudy_start_machine "$machine_name" "$machine_ip"
 }
 
-cloudy_control_machine()
+###########################################################
+#                CLOUDY PRIVATE METHODS                   #
+###########################################################
+
+_cloudy_db_get()
 {
-    echo cloudy_control_machine
+    cloudy_db_path="$(readlink -f "$0")".db
+
+    test -f "$cloudy_db_path/$1" && cat "$cloudy_db_path/$1"
+    test -d "$cloudy_db_path/$1" && ls "$cloudy_db_path/$1" | cat
 }
 
-space="<---SPACE--->"
+_cloudy_db_set()
+{
+    cloudy_db_path="$(readlink -f "$0")".db
+    mkdir -p "$cloudy_db_path/$(dirname $1)"
+    echo "$2" > "$cloudy_db_path/$1"
+}
+
+_cloudy_db_remove()
+{
+    cloudy_db_path="$(readlink -f "$0")".db
+    
+    rm -rf "$cloudy_db_path/$1"
+}
+
+_cloudy_get_methods_list()
+{
+    cat "$0" | grep '^cloudy_' | sed s/'()$'//g | sort | uniq
+}
+
+_cloudy_get_method_argument_name()
+{
+    method="$1"
+    arg_id="$2"
+
+    cat "$0" | grep "^$method()$" -A 100000 | sed -n "$((3+$arg_id))p" | sed 's/^\s*//g' | cut -d '=' -f 1 | tr '_' ' ' | tr 'a-z' 'A-Z'
+}
+
+###########################################################
+#                CLOUDY METHODS LAUNCHER                  #
+###########################################################
+
+space="<---CLOUDY_SPACE--->"
 commands+=("cloudy")
 bridge_path="$(dirname "$(readlink -f "$0")")/bridge"
 export PATH="$PATH:$bridge_path"
-
-echo "$bridge_path"
 
 while [ $# -gt 0 ]
 do
@@ -92,17 +209,21 @@ do
     shift
 done
 
+command_found=0
+
 for c in $(seq 0 $((${#commands[@]}-1)))
 do
+    test $command_found -eq 1 && break
     unset sub_command
 
     for i in $(seq 0 $((${#commands[@]}-1-$c)))
     do
 	sub_command+=("${commands[$i]}")
     done
-    cat "$0" | grep '^cloudy' | sed s/'()$'//g | sort -r | while read -r fct
+    _cloudy_get_methods_list | sort -r | while read -r fct
     do
-	fct_to_match="$(echo "$fct" | sed -e s/_/' '/g -e "s/ARG[0-9][0-9]*/.*/g")"
+	test $command_found -eq 1 && break
+	fct_to_match="$(echo "$fct" | sed -e s/_/' '/g -e "s/ARG[0-9][0-9]*/[^ ]*/g")"
 	if echo "${sub_command[@]} " | grep -q "^$fct_to_match "
 	then
 	    i=0
@@ -119,13 +240,40 @@ do
 	    do
 		fct_args+=("$(echo "${sub_command[$i]}" | sed s/"$space"/' '/g)")
 		i=$(($i+1))
-	    done	   
-	    echo CALL: "${fct_args[@]}"
-	    "${fct_args[@]}"
-	    exit $?
-	fi	    
-    done    
+	    done
+	    echo -e "\033[90mCALL: ${fct_args[@]}\033[m" 1>&2
+	    command_found=1
+	    break
+	fi
+    done
 done
 
-echo "usage: TODO: GENERATE USAGE..."
+if [[ $command_found -eq 1 ]]
+then
+    "${fct_args[@]}"
+    exit $?
+fi
+
+echo -e "usage:\n"
+_cloudy_get_methods_list | while read -r fct
+do
+    (
+	arg_id=0
+	echo -ne "\033[34mcloudy \033[m"
+	echo "$fct" | sed 's/^cloudy_//g' | tr '_' '\n' | while read -r fct_part
+	do
+	    if [[ $fct_part =~ ^ARG[0-9]+$ ]]
+	    then
+		arg_name="$(_cloudy_get_method_argument_name "$fct" "$arg_id")"
+		echo -ne "\033[32m[$arg_name] \033[m"
+		arg_id=$(($arg_id+1))
+	    else
+		echo -n "$fct_part "
+	    fi
+	done
+	echo -e "\n"
+    )
+done
+
 exit 1
+

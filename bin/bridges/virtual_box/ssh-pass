@@ -6,7 +6,6 @@ use strict;
 
 my $progname = $0;
 
-
 sub start
 {
   my $pid = fork;
@@ -68,13 +67,14 @@ sub main
         && $ENV{SSH_ASKPASS} eq $progname
         && @ARGV == 1
         && ! -t 1);
-  $ENV{DISPLAY} = "none." unless exists $ENV{DISPLAY};
+#  $ENV{DISPLAY} = "none." unless exists $ENV{DISPLAY};
   $ENV{SSH_ASKPASS} = $progname;
-  $ENV{_ssp_data} = "generic";
+  $ENV{_ssp_data} = $ENV{CLOUDY_MACHINE_PASSWORD};
 
   my $pid = start (@ARGV);
   my $sighandler = sub { pkill ($_[0], $pid); };
   map { $SIG{$_} = $sighandler } qw(HUP INT QUIT TERM TSTP);
+ 
   exit (exitstat ($pid));
 }
 

@@ -3,7 +3,7 @@
 <pre>
 
 <?wsh
-. conf.ini
+wsh_include "conf.wsh"
 new_scenario_tmp_path="/tmp/.new_scenario.$$"
 
 env

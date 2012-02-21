@@ -21,7 +21,7 @@ cloudy_scenario_uniq_machines()
 cloudy_reachable_machines()
 {
     echo local
-    VBoxManage list vms | cut -d '"' -f 2
+    cloudy list registered machines 
 }
 
 cloudy_copy_scenario_and_replace_variables()
@@ -82,7 +82,12 @@ cloudy_list_default_scenario_variables()
     find "$tmp_var_path" -type f | while read var_path
     do
 	var_name="$(basename "$var_path")"
-	var_delault_val="$(cat "$var_path" | sed -e 's/^/"/g' -e 's/$/"/g' | tr '\n' ',' | sed 's/,$//g')"
+	if [[ -x "$var_path" ]]
+	then
+	    var_delault_val="$("$var_path" | sed -e 's/^/"/g' -e 's/$/"/g' | tr '\n' ',' | sed 's/,$//g')"
+	else
+	    var_delault_val="$(cat "$var_path" | sed -e 's/^/"/g' -e 's/$/"/g' | tr '\n' ',' | sed 's/,$//g')"
+	fi
 	echo "\"default_$var_name\": [$var_delault_val],"
     done
     rm -rf "$tmp_var_path"

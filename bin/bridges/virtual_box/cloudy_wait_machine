@@ -1,0 +1,24 @@
+#!/bin/ksh
+
+cd $(dirname $0)
+SCRIPT_PATH=$(pwd)
+
+machine_name="$1"
+machine_ip="$2"
+root_password="$3"
+
+export CLOUDY_SSH_ROOT_PASSWORD="$3"
+
+echo "Please start machine [$machine_name]"
+echo " Set ip to [$machine_ip]"
+echo " Set root password to [$root_password]"
+while [ 1 ]
+do
+    echo "CLOUDY_MACHINE_PASSWORD=$CLOUDY_MACHINE_PASSWORD"
+    $SCRIPT_PATH/ssh-pass ssh "root@$machine_ip" id | grep root >/dev/null && break
+    echo -n .
+    sleep 1
+done
+
+echo OK
+

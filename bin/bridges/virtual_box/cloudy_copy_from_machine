@@ -6,12 +6,5 @@ SCRIPT_PATH=$(pwd)
 file="$1"
 vm_name="$2"
 path="$3"
-
-echo "MACHINE NAME: $vm_name"
-echo "FILE: $file"
-echo "PATH: $path"
-vm_ip="192.168.56."$(($(echo "$vm_name" | cut -d : -f 3) + 100))
-echo "MACHINE IP: $vm_ip"
-echo BEFORE COPY
-$SCRIPT_PATH/ssh-pass scp -r "$vm_ip:$file" "$path"
-echo AFTER COPY
+vm_ip="$(cloudy get machine ip "$vm_name")"
+$SCRIPT_PATH/ssh-pass scp -r "root@$vm_ip:$file" "$path"
