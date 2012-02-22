@@ -3,27 +3,46 @@
 <?wsh
 page_title="Campaigns"
 wsh_include "header.wsh"
+campaign="$(wsh_input campaign)"
+action="$(wsh_input action)"
 ?>
 
-  <h1>Campaigns</h1>
-  <ol>
-  <?wsh
-      (cd "$scenario_path" ; echo * ; find -type d -name "play()" | sed -e "s,^./,,g" -e "s,/play()$,,g" | grep -v "play()" | xargs -L 1 dirname) | sort | uniq | while read -r cur_campaign_path
-      do
-  ?>
-  <li>
-  <?wsh
-	  echo "$cur_campaign_path"
-  ?>
-          <a class="play_scenario button-inline" href="#" name="<?wsh echo "$cur_campaign_path" ?>">Play</a></li>
-  <?wsh         
-     done
-  ?>
-  </ol>
-  
-  <div id="dialog-modal-var" title="Set Variables">
-  </div>
+<?wsh
 
+add_campaign()
+{
+    mkdir -p "$campaign_path"/"$campaign"
+    echo "Campaign '$campaign' successfully added"
+}
+
+if [[ -n "$campaign" ]]
+then
+    echo "<h1>$campaign</h1>"
+    case "$action" in
+        ADD) add_campaign ;;
+        *) echo "<p>Bad request: campaign [$campaign] - action [$action]</p>" ;;
+    esac
+fi
+
+?>
+
+<h1>Campaigns</h1>
+<p>A campaign is a collection of pre-set scenarios ready to be stacked.</p>
+<ol>
+<?wsh
+    for campaign in $(ls -1 "$campaign_path" | sort)
+    do
+      scenario_count=$(ls -1 "$campaign_path"/"$campaign" | wc -l)
+      echo "<li><a href="campaign.wsh?campaign=$campaign">$campaign</a> ($scenario_count) <a class="button-inline" href="play-campaign.wsh?campaign=$campaign">Play</a></li>"
+    done
+?>
+</ol>
+
+<h1>Add a new campaign</h1>
+<form method="GET">
+    <p>Name: <input name="campaign" type="text" /> <input name="action" type="submit" value="ADD" /></p>
+</form>
+ 
 <?wsh
 wsh_include "footer.wsh"
 ?>

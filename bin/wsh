@@ -5,6 +5,12 @@ wsh_convert_to_ksh()
     sed 1d "$1" | tr '\n' '霞' | sed -e s/'<?wsh'/'\x0A<?wsh'/g  -e s/'?>'/'?>\x0A'/g | sed -e s/"'"/"'\"'\"'"/g -e s/'^'/"echo -n '"/g -e s/'$'/"'"/g -e s/"^echo -n '<?wsh"//g -e s/"?>'$"//g | tr '霞' '\n'
 }
 
+wsh_urldecode()
+{
+  string_to_decode="$(sed -e "s/%2B/________wsh_plus________$$/g" -e "s/%26/________wsh_ampersand________$$/g" -e "s/%5C/________wsh_backslash________$$/g" -e 's/%\(..\)/\\x\1/g;')"
+  echo a | sed "s a $string_to_decode g" | sed -e "s/+/ /g" -e "s/________wsh_ampersand________$$/\&/g" -e "s/________wsh_backslash________$$/\\\\/g" -e "s/________wsh_plus________$$/+/g"
+}
+
 if [[ "$2" = "--convert" ]]
 then
     wsh_convert_to_ksh "$1"
@@ -15,13 +21,18 @@ echo "Content-type: text/html"
 echo
 echo
 
+rm -rf "/tmp/wsh/$$"
+
 if [[ "$REQUEST_METHOD" = "POST" ]]
 then
     echo "$(< /dev/stdin)" | tr '&' '\n' | while read -r kv
     do
 	if [[ -n "$kv" ]]
 	then
-	    export "PARAM_$kv"
+            mkdir -p "/tmp/wsh/$$/get"
+            key="$(echo "$kv" | cut -d"=" -f1 | wsh_urldecode)"
+            val="$(echo "$kv" | cut -d"=" -f2 | wsh_urldecode)"
+            echo -n "$val" > "/tmp/wsh/$$/get/$key"
 	fi
     done
 fi
@@ -32,7 +43,10 @@ then
     do
 	if [[ -n "$kv" ]]
 	then
-	    export "PARAM_$kv"
+            mkdir -p "/tmp/wsh/$$/get"
+            key="$(echo "$kv" | cut -d"=" -f1 | wsh_urldecode)"
+            val="$(echo "$kv" | cut -d"=" -f2 | wsh_urldecode)"
+            echo -n "$val" > "/tmp/wsh/$$/get/$key"
 	fi
     done
 fi
@@ -44,6 +58,7 @@ fi
 cd '"$(dirname "$1")"'
 
 export PATH=".:$PATH"
+export PPID='$$'
 
 wsh_include()
 {
@@ -52,15 +67,17 @@ wsh_include()
    rm -f /tmp/.wsh_include_$$
 }
 
-wsh_urldecode()
-{
-  string_to_decode="$(sed -e "s/%2B/________wsh_plus________$$/g" -e "s/%26/________wsh_ampersand________$$/g" -e "s/%5C/________wsh_backslash________$$/g" -e '"'"'s/%\(..\)/\\x\1/g;'"'"')"
-  echo a | sed s/a/"$string_to_decode"/ | sed -e "s/+/ /g" -e "s/________wsh_ampersand________$$/\&/g" -e "s/________wsh_backslash________$$/\\\\/g" -e "s/________wsh_plus________$$/+/g"
-}
-
 wsh_input()
 {
-   eval "echo \$PARAM_$1"
+   cat "/tmp/wsh/$PPID/get/$1"
+}
+
+wsh_input_list()
+{
+   (
+      cd "/tmp/wsh/$PPID/get/"
+      ls
+   )
 }
 
 wsh_echo()
@@ -70,3 +87,8 @@ wsh_echo()
 
 ' ; wsh_convert_to_ksh "$1" ) | ksh
 
+#rm -rf "/tmp/wsh/$$"
+if [[ ! -f "/tmp/wsh/$$/forked" ]]
+then
+    rm -rf "/tmp/wsh/$$"
+fi

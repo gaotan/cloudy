@@ -1,0 +1,57 @@
+#!/bin/ksh
+
+cd $(dirname "$0")
+
+pgrep -f cloudy.shellinaboxd | xargs -L 1 kill -9
+pgrep -f cloudy.sshpass | xargs -L 1 kill -9
+
+rm -rf shellinabox-2.14 sshpass-1.05
+tar xvzf shellinabox-2.14.tar.gz
+tar xvzf sshpass-1.05.tar.gz
+cp -RT shellinabox-2.14.patch shellinabox-2.14
+
+(
+    cd sshpass-1.05
+    ./configure 
+    make
+    sudo mv sshpass /bin/cloudy.sshpass
+)
+
+(
+    cd shellinabox-2.14
+    ./configure 
+    make
+    mv "shellinaboxd" "cloudy.shellinaboxd"
+)
+
+cmd=("shellinabox-2.14/cloudy.shellinaboxd")
+cmd+=("--localhost-only")
+cmd+=("-b")
+cmd+=("-u")
+cmd+=($(id -u))
+cmd+=("-g")
+cmd+=($(id -g))
+cmd+=("-t")
+cmd+=("--css")
+cmd+=("./shellinabox-2.14/shellinabox/white-on-black.css")
+cmd+=("--css")
+cmd+=("./cloudy.css")
+
+cloudy list registered machines | while read machine 
+do
+    echo ">> [$machine]"
+
+    machine_ip="$(cloudy get machine ip "$machine")"
+    cmd+=("-s")
+    cmd+=("/$machine:SSH:$machine_ip")
+done
+
+echo "${cmd[@]}"
+
+"${cmd[@]}"
+
+sleep 1
+
+rm -rf shellinabox-2.14 sshpass-1.05
+
+echo DONE

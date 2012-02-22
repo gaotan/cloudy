@@ -1,7 +1,13 @@
 #!/usr/bin/env wsh
 
+    </section>
     <footer>
-      <p>Powered by Cloudy.</p>
+
+    <?wsh
+    wsh_include "tasks.wsh"
+    ?>
+
+    <p>Powered by <a href="https://github.com/gaotan/cloudy">Cloudy</a>.</p>
     </footer>
   </body>
 </html>

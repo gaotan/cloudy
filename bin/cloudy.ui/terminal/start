@@ -1,0 +1,23 @@
+#!/bin/sh
+
+machine_ip="$1"
+
+cd $(dirname $0)
+
+#tar xvzf Ajaxterm-0.10.tar.gz
+
+#pkill -f ajaxterm.py
+
+#cat ./Ajaxterm-0.10/ajaxterm.py | sed "s/<CLOUDY_MACHINE_IP>/$machine_ip/g" > ./Ajaxterm-0.10/ajaxterm.py.local
+
+#python ./Ajaxterm-0.10/ajaxterm.py.local -c /bin/bash -d -p 8022 2>&1 > /dev/null
+
+#echo "terminal:$machine_ip:8022"
+
+
+pkill -f cloudy_web_terminal
+
+cloudy_web_terminal -u root -p 8022 1>&2
+
+echo "terminal:$machine_ip:8022"
+

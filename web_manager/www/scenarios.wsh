@@ -7,31 +7,56 @@ wsh_include "header.wsh"
 query="$(wsh_input q)"
 ?>
 
-   <h1>Available Scenarios</h1>
-   <form method="GET">
-      <fieldset style="border: none; border-top: 1px dotted #888">
-          <legend>Filter</legend>
-         <input name="q" value="<?wsh echo "$query" ?>" type="text" /> <input name="search" type="submit" value="OK" />
-      </fieldset>
-   </form>
-   <ol>
-   <?wsh
-      (cd "$scenario_path" ; find -type d -name "play()") | grep "$query" | sort | while read -r cur_scenario_path
-      do
-	  if [[ ! -f "$scenario_path/$cur_scenario_path/run" ]]
-	  then
-	      scenario="$(echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g)"
-   ?>
-            <li><a target="_blank" href="edit.wsh?name=<?wsh echo "$scenario" ?>"><?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?></a>        
-            <a class="play_scenario button-inline" href="#" name="<?wsh echo "$scenario" ?>">Play</a></li>
-   <?wsh
-          fi
-      done
-   ?>
-   </ol>
+<h1>Available Scenarios</h1>
+<form method="GET">
+    <fieldset class="filter">
+        <legend>Filter</legend>
+        <input name="q" value="<?wsh echo "$query" ?>" type="text" /> <input name="search" type="submit" value="OK" />
+    </fieldset>
+</form>
+<ul>
+    <ol>
+    <?wsh
+    (cd "$scenario_path" ; echo * ; find -type d -name "play()" | grep "$query" | sed -e "s,^./,,g" -e "s,/play()$,,g" | xargs -L 1 dirname) | sort | uniq | while read -r current_path
+    do
+        if [[ ! -f "$scenario_path/$current_path/run" ]]
+        then
+            scenario="$(echo "$current_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g)"
+        fi
 
-   <div id="dialog-modal-var" title="Set Variables">
-   </div>
+        if [[ -z "$(echo "$current_path" | grep "play()")" ]] ; then
+            ?>
+            </ol>
+            <li>
+            <?wsh
+            echo "$current_path" | sed -e "s,/play()$,,g"
+        else
+            ?>
+            <li>
+            <a target="_blank" href="edit.wsh?name=<?wsh echo "$scenario" ?>">
+            <?wsh
+            basename "$(echo -n "$current_path" | sed -e "s,/play()$,,g")"
+            ?></a>
+            <?wsh 
+        fi
+        ?>
+
+        <a class="play_scenario button-inline" href="#" name="<?wsh echo "$current_path" ?>">Play</a>
+        <a class="add_scenario_to_campaign button-inline" href="#" name="<?wsh echo "$current_path" ?>">Add</a>
+        </li>
+
+    <?wsh         
+        if [[ -z "$(echo "$current_path" | grep "play()")" ]] ; then
+            echo "<ol>"
+        fi  
+
+     done
+     ?>
+     </ol>
+</ul>
+
+<div id="dialog-modal-var" title="Set Variables">
+</div>
 
 <?wsh
 wsh_include "footer.wsh"

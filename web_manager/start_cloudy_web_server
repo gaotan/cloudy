@@ -148,7 +148,7 @@ scenario_path=$SCRIPT_ROOT/../scenarios
 scenario_stack_path=$SCRIPT_ROOT/../stack
 scenario_running_path=$SCRIPT_ROOT/../stack.running
 scenario_done_path=$SCRIPT_ROOT/../stack.done
-nodes_path=$SCRIPT_ROOT/../nodes
+campaign_path=$SCRIPT_ROOT/../campaigns
 cloudy_bin_path=$SCRIPT_ROOT/../bin
 ?>
 " > "$SCRIPT_ROOT/www/conf.wsh"

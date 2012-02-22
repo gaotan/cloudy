@@ -1,29 +1,58 @@
 #!/usr/bin/env wsh
 
 <?wsh
-   wsh_include "conf.wsh"
-   . lib_cloudy.sh
+    wsh_include "conf.wsh"
+    . lib_cloudy.sh
 
-   name="$(wsh_input name)"
-   play_path="$scenario_stack_path/$(date "+%s")/$name"
+    scenario_name="$(wsh_input name)"
+    campaign_name="$(wsh_input var_CAMPAIGN_NAME)"
+    add_to_campaign="$(wsh_input add_to_campaign)"
 
-   status=0
-   echo "{"
-   cloudy_search_scenario_variables "$scenario_path/$name" | while read -r var_name
-   do
-       if [[ -z "$(wsh_input "var_$var_name")" ]]
-       then
-	   status=$(($status+1))
-	   echo "\"var_$status\": \"$var_name\","       
-       fi
-   done
-   cloudy_list_default_scenario_variables "$scenario_path" "$name"
-   echo "\"status\": \"$status\""
-   echo "}"
+    status=0
+    echo "{"
+    cloudy_search_scenario_variables "$scenario_path/$scenario_name" | while read -r var_name
+    do
+        if [[ -z "$(wsh_input "var_$var_name")" ]]
+        then
+	    status=$(($status+1))
+	    echo "\"var_$status\": \"$var_name\","
+        fi
+    done
+    if [[ "$add_to_campaign" -eq 1 ]]
+    then
+        if [[ -z "$campaign_name" ]]
+        then
+            status=$(($status+1))
+            echo "\"var_$status\": \"CAMPAIGN_NAME\","
+        fi
+    fi
+    cloudy_list_default_scenario_variables "$scenario_path" "$scenario_name"
 
-   if [[ "$status" -eq 0 ]]
-   then
-       cloudy_copy_scenario_and_replace_variables "$scenario_path/$name" "$play_path"
-   fi
+    set -A campaigns $(ls "$campaign_path")
+    echo -n "\"default_CAMPAIGN_NAME\": ["
+    for element in $(seq 0 $((${#campaigns[@]} - 1)))
+        do  
+            echo -n "\"${campaigns[$element]}\""
+            if [[ $element -lt $((${#campaigns[@]} - 1)) ]]
+            then
+                echo -n "," 
+            fi  
+        done
+    echo "],"
+
+   
+    echo "\"status\": \"$status\""
+    echo "}"
+
+    if [[ "$status" -eq 0 ]]
+    then
+        if [[ "$add_to_campaign" -eq 0 ]]
+        then
+            play_path="$scenario_stack_path/$(date "+%s")/$scenario_name"
+            cloudy_task "Copy scenario [$scenario_name] to stack" cloudy_copy_scenario_and_replace_variables "$scenario_path/$scenario_name" "$play_path"
+        else
+            add_to_campaign_path="$campaign_path/$campaign_name/$(date "+%s")/$scenario_name"
+            cloudy_task "Add scenario [$scenario_name] to campaing [$campaign_name]" cloudy_copy_scenario_and_replace_variables "$scenario_path/$scenario_name" "$add_to_campaign_path"
+        fi
+    fi
 ?>
-

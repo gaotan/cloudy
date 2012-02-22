@@ -7,9 +7,10 @@ wsh_include "conf.wsh"
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-Equiv="refresh" content="2;url=stack.wsh">
+    <meta http-Equiv="refresh" content="2;url=stacked.wsh">
     <meta charset="utf-8">
     <title>Purge stacked scenario</title>
+    <link rel="stylesheet" href="css/cloudy.css">
   </head>
   <body>
 
@@ -19,7 +20,7 @@ wsh_include "conf.wsh"
    <?wsh
       (
       if [[ -n "$scenario_stack_path" ]] ; then
-           rm -rf "$scenario_stack_path"/1*
+           rm -rf "$scenario_stack_path"/*
       fi
       )
    ?>

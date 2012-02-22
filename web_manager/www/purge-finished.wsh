@@ -10,6 +10,7 @@ wsh_include "conf.wsh"
     <meta http-Equiv="refresh" content="2;url=finished.wsh">
     <meta charset="utf-8">
     <title>Purge finished scenario</title>
+    <link rel="stylesheet" href="css/cloudy.css">
   </head>
   <body>
 

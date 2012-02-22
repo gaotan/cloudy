@@ -8,10 +8,14 @@ vm_ip="$(cloudy get machine ip "$vm_name")"
 
 VBoxManage startvm --type headless "$vm_name"
 
-while [ 1 ]
-do
-    echo -n "."
-    $SCRIPT_PATH/ssh-pass ssh "root@$vm_ip" "id ; pkill -9 dhclient" | grep root >/dev/null && break
-    sleep 1
-done
+is_linux_vm="$(VBoxManage showvminfo "$vm_name" | grep 'OS type' | grep -E '(Debian|Ubuntu|RedHat|Linux)')"
+if [ -n "$is_linux_vm" ]
+then
+    while [ 1 ]
+    do
+        echo -n "."
+        $SCRIPT_PATH/ssh-pass ssh "root@$vm_ip" "id ; pkill -9 dhclient" | grep root >/dev/null && break
+        sleep 1
+    done
+fi
 

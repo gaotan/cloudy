@@ -1,0 +1,42 @@
+#!/usr/bin/env wsh
+
+<?wsh
+wsh_include "conf.wsh"
+campaign="$(wsh_input campaign)"
+item="$(wsh_input item)"
+?>
+
+<?wsh
+if [[ -n "$campaign" ]] ; then
+    if [[ -z "$item" ]] ; then
+        url_redirection="campaigns.wsh"
+        page_title="Drop campaign $campaign"
+        if [[ -d "$campaign_path/$campaign" ]] ; then
+            rm -rf "$campaign_path/$campaign"
+        fi
+    else
+        url_redirection="campaign.wsh?campaign=$campaign"
+        page_title="Drop item $item"
+        if [[ -d "$campaign_path/$campaign/$item" ]] ; then
+            rm -rf "$campaign_path/$campaign/$item"
+        fi
+    fi
+fi
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-Equiv="refresh" content="2;url=<?wsh wsh_echo "$url_redirection" ?>">
+    <meta charset="utf-8">
+    <title><?wsh wsh_echo "$page_title" ?></title>
+    <link rel="stylesheet" href="css/cloudy.css">
+  </head>
+  <body>
+
+   <h1><?wsh wsh_echo "$page_title" ?></h1>
+   <p>Please wait...</p>
+
+  </body>
+</html>
+

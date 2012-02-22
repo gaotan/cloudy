@@ -1,0 +1,28 @@
+#!/usr/bin/env wsh
+
+    <br/>
+    Tasks:
+    <ol>
+    <?wsh
+        cloudy_tasks_path="/tmp/cloudy/tasks"	
+	cd $cloudy_tasks_path
+	ls | while read task_pid
+	do
+	    echo "<li>"
+	    cat $task_pid/name
+	    
+	    if [[ -f $task_pid/exit_code ]]
+	    then
+		if [[ "$(cat $task_pid/exit_code)" -eq 0 ]]
+		then		    
+		    echo "[DONE: OK]"
+		else
+		    echo "[DONE: KO]"
+		fi
+	    else
+		echo "[RUNNING]"
+	    fi
+	    echo "</li>"
+	done
+    ?>
+    </ol>

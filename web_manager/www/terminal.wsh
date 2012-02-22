@@ -1,0 +1,33 @@
+#!/usr/bin/env wsh
+
+<?wsh
+page_title="Terminal"
+wsh_include "header.wsh"
+current_machine="$(wsh_input machine)"
+?>
+
+<html>
+
+<?wsh
+if [[ -z "$current_machine" ]]
+then
+?>
+<h1>No machine selected.</h1>
+
+<?wsh
+else
+
+echo "<h1>$current_machine</h1>"
+
+?>
+
+<iframe src="http://127.0.0.1:4200/<?wsh wsh_echo $current_machine ?>" scrolling="auto" frameborder="0" align="top" style="width:100%; height:500px;" >
+</iframe>
+
+<br/>
+<a href="/virtual-machines.wsh">Machines List</a>
+<?wsh
+fi
+?>
+
+</html>

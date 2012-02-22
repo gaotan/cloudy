@@ -1,10 +1,28 @@
 #!/usr/bin/env wsh
 
 <?wsh
-page_title="Stacked Scenarios"
+page_title="Stacked and Running Scenarios"
 page_refresh="60"
 wsh_include "header.wsh"
 ?>
+
+   <h1>Running Scenario</h1>
+   <ol>
+
+   <?wsh
+      (cd "$scenario_running_path" ; find -type d -name "play()") | sort | while read -r cur_scenario_path
+      do  
+          if [[ ! -f "$scenario_running_path/$cur_scenario_path/run" ]]
+          then
+              scenario="$(echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g)"
+   ?>  
+            <li><?wsh echo "$cur_scenario_path" | sed -e s!"^./"!!g -e s!"/play()$"!!g ?></li>
+   <?wsh
+          fi  
+      done
+   ?>
+   </ol>
+
 
    <h1>Stacked Scenarios</h1>
    <ol>
@@ -23,11 +41,9 @@ wsh_include "header.wsh"
    </ol>
 
    <p class="button-bar">
-     <a href="purge-stack.wsh" title="Purge all stacked scenarios">Purge all</a>
+     <a href="purge-stacked.wsh" title="Purge all stacked scenarios">Purge all</a>
    </p>
 
-    <div id="dialog-modal-var" title="Set Variables">
-    </div>
 
 <?wsh
 wsh_include "footer.wsh"

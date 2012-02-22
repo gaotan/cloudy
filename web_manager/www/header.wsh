@@ -2,6 +2,7 @@
 
 <?wsh
 wsh_include "conf.wsh"
+. lib_cloudy.sh
 ?>
 
 <!DOCTYPE html>
@@ -35,21 +36,46 @@ wsh_include "conf.wsh"
     <script src="js/jquery.ui.resizable.js"></script>
 
     <script>
+    function strpos (haystack, needle, offset) {
+        // Finds position of first occurrence of a string within another  
+        // discuss at: http://phpjs.org/functions/strpos    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+        // *     example 1: strpos('Kevin van Zonneveld', 'e', 5);    // *     returns 1: 14
+        var i = (haystack + '').indexOf(needle, (offset || 0));
+        return i === -1 ? false : i;
+    }
+
+    function show_linked_values(data, source_field_name, target_field_name) {
+        // Populate target field with new values when source field is changed
+        selected_value=$("#" + source_field_name + " option:selected").val(); 
+        selected_values = data["default_" + target_field_name][selected_value];
+        target_element = $('select[id="' + target_field_name + '"]');
+        
+        subvalues = selected_values;
+        subvalues_html = ''; 
+        for(var i= 0; i < subvalues.length; i++)
+        {   
+            subvalues_html += '<option value="' + subvalues[i] + '">' + subvalues[i] + '</option>';
+        }   
+        target_element.html(subvalues_html);
+    }
+
     $(function()
 	{
-	    function play_scenario()
+	    function play_scenario(event)
 	    {
 		var play_scenario_name = $(this).attr("name");
 		var play_scenario_query_string = "name=" + play_scenario_name;
 
 		$(".play_scenario").hide();
+		$(".add_scenario_to_campaign").hide();
 		$("#dialog-modal-var").find(".dialog-modal-select").each(function(){
 			play_scenario_query_string += "&var_" + $(this).attr("name") + "=" + $(this).val();
 			});
+                //play_scenario_query_string += "&campaign=" + $("#campaigns-select").val();
+                play_scenario_query_string += "&add_to_campaign=" + event.data.add_to_campaign;
 		$("#dialog-modal-var").dialog('close');
 		$("#dialog-modal-var").html("");
 		$.getJSON("play.wsh?" + play_scenario_query_string, function(data) {
-
 			if (data["status"] > 0)
 			    {
 				var dialog_html = "";
@@ -66,7 +92,7 @@ wsh_include "conf.wsh"
 						}
 						else
 						{
-						    dialog_html += '<select name="' + val + '" class="dialog-modal-select">';
+						    dialog_html += '<select id="' + val + '" name="' + val + '" class="dialog-modal-select">';
 						    for(var i= 0; i < default_values.length; i++)
 						    {
 							dialog_html += '<option value="' + default_values[i] + '">' + default_values[i] + '</option>';
@@ -76,10 +102,12 @@ wsh_include "conf.wsh"
 						dialog_html += "<br/><br/>";
 					    }
 					    });
-				dialog_html += '<a name="' + play_scenario_name + '" id="dialog_modal_play_scenario" href="#">Play</a>';
+
+				dialog_html += '<p><a name="' + play_scenario_name + '" id="dialog_modal_play_scenario" href="#">Play</a></p>';
 				$("#dialog-modal-var").html(dialog_html);
-				$("#dialog_modal_play_scenario").click(play_scenario);
+                                $("#dialog_modal_play_scenario").click({add_to_campaign:event.data.add_to_campaign}, play_scenario);
 				$(".play_scenario").hide();
+                                $(".add_scenario_to_campaign").hide();
 				$("#dialog-modal-var").dialog(
 				    {
 					position: 'center',
@@ -89,18 +117,42 @@ wsh_include "conf.wsh"
 					{
 					    $("#dialog-modal-var").html("");
 					    $(".play_scenario").show();
+					    $(".add_scenario_to_campaign").show();
 					}
 				    }
 				);
+
+
+                                $.each(data, function(key, value)
+                                {
+                                    if (key.match(/^var_/))
+                                    {
+                                        if (value.match(/\./))
+                                        {
+                                            source_field_name = value.slice(0, strpos(value, '.', 0)); 
+                                            target_field_name = value;
+
+                                            $("#" + source_field_name).change(function() {
+                                                show_linked_values(data, source_field_name, target_field_name);
+                                            });
+                                           
+                                            show_linked_values(data, source_field_name, target_field_name);
+                                        }
+                                    }
+                                });
+
+
 			    }
 			else
 			    {
-				$(".play_scenario").show();			
+				$(".play_scenario").show();
+				$(".add_scenario_to_campaign").show();
 			    }
 			    
 			    });
 	    }
-	    $(".play_scenario").click(play_scenario);	  
+            $(".play_scenario").click({add_to_campaign:0}, play_scenario);
+            $(".add_scenario_to_campaign").click({add_to_campaign:1}, play_scenario);
 	});
     </script>
 
@@ -109,11 +161,45 @@ wsh_include "conf.wsh"
     <header>
       <nav>
         <ul id="menu">
+          <li><a href="scenarios.wsh">Scenarios</a></li>
           <li><a href="campaigns.wsh">Campaigns</a></li>
-          <li><a href="scenarios.wsh">Available Scenarios</a></li>
-          <li><a href="stack.wsh">Stacked Scenarios</a></li>
-          <li><a href="running.wsh">Running Scenario</a></li>
-          <li><a href="finished.wsh">Finished Scenarios</a></li>
+          <li><a href="stacked.wsh">Stacked</a></li>
+          <li><a href="finished.wsh">Finished</a></li>
+          <li><a href="virtual-machines.wsh">VMs</a></li>
         </ul>
       </nav>
     </header>
+    <section>
+
+    <?wsh
+    if [[ -z "$scenario_path" ]] ; then
+        echo "<p class=\"warning\">Variable [scenario_path] is not set in [conf.wsh].</p>"
+       wsh_include "footer.wsh"
+        exit 1
+    fi
+    if [[ -z "scenario_stack_path" ]] ; then
+        echo "<p class=\"warning\">Variable [scenario_stack_path] is not set in [conf.wsh].</p>"
+        wsh_include "footer.wsh"
+        exit 1
+    fi
+    if [[ -z "$scenario_running_path" ]] ; then
+        echo "<p class=\"warning\">Variable [scenario_running_path] is not set in [conf.wsh].</p>"
+        wsh_include "footer.wsh"
+        exit 1
+    fi
+    if [[ -z "$scenario_done_path" ]] ; then
+        echo "<p class=\"warning\">Variable [scenario_done_path] is not set in [conf.wsh].</p>"
+        wsh_include "footer.wsh"
+        exit 1
+    fi
+    if [[ -z "$campaign_path" ]] ; then
+        echo "<p class=\"warning\">Variable [campaign_path] is not set in [conf.wsh].</p>"
+        wsh_include "footer.wsh"
+        exit 1
+    fi
+    if [[ -z "$cloudy_bin_path" ]] ; then
+        echo "<p class=\"warning\">Variable [cloudy_bin_path] is not set in [conf.wsh].</p>"
+        wsh_include "footer.wsh"
+        exit 1
+    fi
+    ?>

@@ -1,0 +1,36 @@
+#!/usr/bin/env wsh
+
+<?wsh
+wsh_include "conf.wsh"
+campaign="$(wsh_input campaign)"
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-Equiv="refresh" content="5;url=campaigns.wsh">
+    <meta charset="utf-8">
+    <title>Replay scenario</title>
+    <link rel="stylesheet" href="css/cloudy.css">
+  </head>
+  <body>
+
+    <h1>Copying campaign into the stack...</h1>
+    <p>Status..........
+
+    <?wsh
+        (
+        tmp_dir="/tmp/cloudy_play_campaign"
+        if [[ -n "$campaign_path/$campaign" ]] ; then
+            mkdir -p "$tmp_dir"
+            cp -R "$campaign_path/$campaign/"* "$tmp_dir/".
+            #find "$tmp_dir" -name "*run.*" | xargs -i rm {}
+            target_dir="$scenario_stack_path/"$(date "+%s")
+            mkdir "$target_dir"
+            mv "$tmp_dir/"* "$target_dir/". && echo "OK" || echo "FAILED"
+        fi
+        )
+    ?>
+    </p>
+  </body>
+</html>

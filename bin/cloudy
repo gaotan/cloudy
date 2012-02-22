@@ -22,13 +22,25 @@ cloudy_sshpass()
     ssh-pass $*
 }
 
+cloudy_start_ui_in_machine_ARG1()
+{
+    machine_name="$1"
+    machine_ip="$(_cloudy_db_get "machines/$machine_name/ip")"
+
+    export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"  
+    shift
+    ssh-pass ssh "$machine_ip" "rm -rf /cloudy.ui"
+    cloudy_copy_to_machine "$(readlink -f "$0")".ui "$machine_name" "/"
+    ssh-pass ssh "$machine_ip" "chmod +x /cloudy.ui/start ; /cloudy.ui/start $machine_ip"
+}
+
 cloudy_ssh_ARG1()
 {
     machine_name="$1"
 
     export CLOUDY_MACHINE_PASSWORD="$(_cloudy_db_get "machines/$machine_name/password")"  
     shift
-    ssh-pass ssh "$(_cloudy_db_get "machines/$machine_name/ip")" $*
+    ssh-pass ssh root@"$(_cloudy_db_get "machines/$machine_name/ip")" $*
 }
 
 cloudy_drop_machine_ARG1()
@@ -43,11 +55,33 @@ cloudy_list_registered_machines()
     _cloudy_db_get "machines"
 }
 
+cloudy_list_running_machines()
+{
+    _cloudy_db_get "machines" | while read -r machine
+    do
+	cloudy_get_machine_status $machine >/dev/null && echo $machine
+    done
+}
+
+cloudy_get_machine_ARG1_status()
+{
+  machine_name="$1"
+
+  cloudy_get_machine_status "$machine_name"
+}
+
 cloudy_get_machine_ARG1_ip()
 {
     machine_name="$1"
     
     _cloudy_db_get "machines/$machine_name/ip"
+}
+
+cloudy_get_machine_ARG1_snapshots()
+{
+    machine_name="$1"
+
+    cloudy_get_machine_snapshots "$machine_name"
 }
 
 cloudy_take_snapshot_named_ARG1_on_machine_ARG2()

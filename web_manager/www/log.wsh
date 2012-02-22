@@ -3,7 +3,7 @@
 <?wsh
    wsh_include "conf.wsh"
 
-   path="$(find $PARAM_path -name "*.log" -type f | sort -nr | head -n 1)"
+   path="$(find $(wsh_input "path") -name "*.log" -type f | sort -nr | head -n 1)"
 
    if [[ -f "$path".html ]]
    then
@@ -11,9 +11,8 @@
       exit
    fi
 
-   if [[ "$PARAM_get_log" = "true" ]]
+   if [[ "$(wsh_input "get_log")" = "true" ]]
    then
-
       if [[ ! -f "$path" ]]
       then
           date
@@ -21,7 +20,7 @@
           exit
       fi
       tail -n 100 "$path" | sed -e  "s/\(.\{180\}\)\(.*\)/\\1.../g" | "$cloudy_bin_path/ansi2html.sh" --bg=dark
-      sleep .1
+      sleep 0.1
       exit
    fi
 ?>

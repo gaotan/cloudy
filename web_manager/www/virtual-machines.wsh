@@ -1,0 +1,62 @@
+#!/usr/bin/env wsh
+
+<?wsh
+page_title="Terminal"
+wsh_include "header.wsh"
+current_machine="$(wsh_input machine)"
+action="$(wsh_input action)"
+?>
+
+<html>
+
+<?wsh
+
+if [[ -n "$current_machine" ]]
+then
+    echo "<h1>$current_machine</h1>"
+    case "$action" in
+        start)
+	    cloudy_task "Start machine [$current_machine] with snapshot [READY_TO_GO_SNAPSHOT]" cloudy control machine "$current_machine" set snapshot "READY_TO_GO_SNAPSHOT" and start 
+	    ;;
+        stop) 
+	    cloudy_task "Stopping machine [$current_machine]" cloudy control machine "$current_machine" stop 
+	    ;;
+        *) 
+	    echo "<p>Bad request: machine [$current_machine] - action [$action]</p>" 
+	    ;;
+    esac
+fi
+?>
+<h1>Registered Virtual Machines</h1>
+<ol>
+<?wsh
+for machine in $(cloudy list registered machines)
+do
+    machine_status=$(cloudy get machine "$machine" status)
+?>
+
+<li class="vm-status-<?wsh wsh_echo $machine_status ?>">
+    <?wsh
+    wsh_echo $machine
+    if [[ $machine_status -eq 0 ]] ; then
+    ?>
+    <a class="button-inline" href="?machine=<?wsh wsh_echo $machine ?>&action=<?wsh wsh_echo stop ?>">Stop</a>
+    <a class="button-inline" href="terminal.wsh?machine=<?wsh wsh_echo $machine ?>">Terminal</a>
+    <?wsh
+    else
+    ?>
+    <a class="button-inline" href="?machine=<?wsh wsh_echo $machine ?>&action=<?wsh wsh_echo start ?>">Start</a>
+    <?wsh
+    fi
+    ?>
+</li>
+
+<?wsh
+done
+?>
+</ol>
+
+<?wsh
+wsh_include "footer.wsh"
+?>
+

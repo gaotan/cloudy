@@ -1,0 +1,35 @@
+#!/usr/bin/env wsh
+
+<?wsh
+wsh_include "conf.wsh"
+scenario="$(wsh_input scenario)"
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-Equiv="refresh" content="2;url=finished.wsh">
+    <meta charset="utf-8">
+    <title>Replay scenario</title>
+  </head>
+  <body>
+
+    <h1>Copying scenario into the stack...</h1>
+    <p>Status..........
+
+    <?wsh
+        (
+        tmp_dir="/tmp/cloudy_replay"
+        if [[ -n "$scenario_done_path/$scenario" ]] ; then
+            mkdir -p "$tmp_dir"
+            cp -R "$scenario_done_path/$scenario/"* "$tmp_dir/".
+            find "$tmp_dir" -name "*run.*" | xargs -i rm {}
+            target_dir="$scenario_stack_path/"$(date "+%s")
+            mkdir "$target_dir"
+            mv "$tmp_dir/"* "$target_dir/". && echo "OK" || echo "FAILED"
+        fi
+        )
+    ?>
+    </p>
+  </body>
+</html>

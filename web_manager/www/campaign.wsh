@@ -1,0 +1,34 @@
+#!/usr/bin/env wsh
+
+<?wsh
+page_title="Campaign"
+wsh_include "header.wsh"
+campaign="$(wsh_input campaign)"
+?>
+
+   <h1>Campaign <?wsh wsh_echo "$campaign" ?> <a class="button-inline" href="drop-campaign.wsh?campaign=<?wsh wsh_echo "$campaign" ?>">Drop</a></h1>
+   <ol>
+   <?wsh
+      (cd "$campaign_path/$campaign" ; find -type f -name "variables.ini") | while read -r item_path
+      do  
+          item="$(echo "$item_path" | sed -e s!"^./"!!g -e s!"/variables.ini$"!!g -e s!"/play()$"!!g)"
+          item_timestamp="$(echo "$item" | cut -d"/" -f1)"
+   ?>  
+          <li><?wsh echo "$item" ?> <a class="button-inline" href="drop-campaign.wsh?campaign=<?wsh wsh_echo "$campaign" ?>&item=<?wsh wsh_echo "$item_timestamp" ?>">Drop</a></li>
+          <ul>
+   <?wsh
+          while read item_variable
+          do
+              echo "<li class=\"campaign-variable\">$item_variable"
+          done < "$campaign_path/$campaign/$item_path" | grep -v "CAMPAIGN_NAME="
+   ?>
+          </ul>
+   <?wsh
+      done
+   ?>  
+   </ol>
+
+
+<?wsh
+wsh_include "footer.wsh"
+?>

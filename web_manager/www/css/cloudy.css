@@ -1,10 +1,14 @@
+/* ---------------------------
+   general
+--------------------------- */
 body {
+  margin: 0;
   font-size: 0.8em;
   font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
 }
 
-ul {
-  margin: 0;
+ul, ol {
+  margin: 0 0 0 2em;
   padding: 0;
 }
 
@@ -14,44 +18,82 @@ li {
 }
 
 a {
-  text-decoration: none;
+  /* text-decoration: none; */
 }
 
 a:hover {
   color: #1F79AD;
 }
 
-footer {
-  margin: 2em 0 0 0;
-  border-top: 1px dotted #888;
+
+/* ---------------------------
+   header
+--------------------------- */
+nav {
+  background: #eee;
+  padding: 0.5em 1em 1.2em 1em;
+  border-bottom: 3px solid #ddd;
 }
 
-footer p {
-  text-align: right;
-  font-size: 80%;
+#menu {
+  margin: 0;
 }
 
 #menu li {
   display: inline-block;
+  margin: 0.5em 0;
 }
 
 #menu a {
   margin: 0 1em 0 0;
   padding: 0.2em;
+  color: #333;
   font-size: 110%;
-  border-bottom: 3px solid black;
+  border-bottom: 3px solid #333;
+  text-decoration: none;
 }
 
 #menu a:hover {
+  color: #1F79AD;
   border-bottom: 3px solid #1F79AD;
 }
 
+
+/* ---------------------------
+   body section
+--------------------------- */
+section {
+  position: relative;
+  margin: 0 1em;
+}
+
+/* ---------------------------
+   footer
+--------------------------- */
+footer {
+  margin-top: 2em;
+  background: #eee;
+  padding: 0.5em 1em;
+  border-top: 3px solid #ddd;
+}
+
+footer p {
+  text-align: right;
+  font-size: 80%;
+  color: #1F79AD;
+}
+
+
+/* ---------------------------
+   other
+--------------------------- */
 .button-inline {
-  margin: 0 0 0 0.2em;
+  margin: 0 0 0 0.5em;
   padding: 0 0.3em; 
   background: #eee;
   border-radius: 6px;
   font-weight: bold;
+  text-decoration: none;
 }
 
 .button-bar {
@@ -65,8 +107,13 @@ footer p {
   border: 1px solid #bbb;
   border-radius: 6px;
   font-weight: bold;
+  text-decoration: none;
 }
 
+
+/* ---------------------------
+   scenarios
+--------------------------- */
 .sub-scenario {
   margin: 0.2em 0;
 }
@@ -78,16 +125,45 @@ footer p {
 }
 
 .finished-scenario {
-/*  padding: 0.1em 0.5em; */
-/*  background: #C1D5F4; */
   border-bottom: 2px solid #1F79AD;
 }
 
-.status-ok {
-  color: #119933;
+.scenario-status-ok {
+  color: #79CE12;
 }
 
-.status-ko {
+.scenario-status-ko {
   color: #FF0000;
+}
+
+.filter {
+  position: absolute;
+  top: 0.5em;
+  right: 0;
+  width: 19em;
+  border: none;
+  border-top: 1px dotted #888;
+}
+
+
+/* ---------------------------
+   campaign
+--------------------------- */
+.campaign-variable {
+  font-size: 0.8em;
+  color: #aaa;
+}
+
+
+/* ---------------------------
+   virtual machines
+--------------------------- */
+.vm-status-0 {
+    color: #79CE12;
+    font-weight: bold;    
+}
+
+.vm-status-1 {
+    color: #aaa;
 }
 

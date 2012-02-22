@@ -1,0 +1,38 @@
+#!/bin/sh
+
+cd $(dirname $0)
+
+get_os()
+{
+    echo "linux"
+}
+
+get_linux_arch()
+{
+    lscpu | grep '^Architecture:' | grep -q x86_64 && echo 64 || echo 32
+}
+
+os="$(get_os)"
+
+if [ -z "$os" ]
+then
+    echo "Unable to detect OS" 1>&2
+    exit 1
+fi
+
+arch="$(get_"$os"_arch)"
+
+if [ -z "$arch" ]
+then
+    echo "Unable to detect CPU architecture" 1>&2
+    exit 1
+fi
+
+export PATH=$(readlink -f ./bin/$os/$arch):$PATH
+
+chmod +x */start
+
+terminal/start $*
+
+
+

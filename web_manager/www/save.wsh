@@ -6,11 +6,15 @@
 wsh_include "conf.wsh"
 new_scenario_tmp_path="/tmp/.new_scenario.$$"
 
-env
-
-env | grep "^PARAM_SCRIPT" | cut -d "=" -f 2 | while read -r script
+wsh_input_list | grep "^SCRIPT" | while read -r script
 do
-  script="$(echo "$script" | wsh_urldecode)"
+  script="$(wsh_input $script)"
+
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" >> /tmp/wsh_debug
+echo "input list: [$(wsh_input_list)]" >> /tmp/wsh_debug
+echo "script: [$script]" >> /tmp/wsh_debug
+echo -------------------------------------------- >> /tmp/wsh_debug
+
   name="$(echo "$script" | head -n 1 | tr " " "_" | tr "A-Z" "a-z")"
   machine="$(echo "$script" | head -n 2 | tail -n 1)"
   script="$(echo "$script" | sed 1,2d)"
@@ -20,8 +24,11 @@ do
       mkdir -p "$new_scenario_tmp_path/$machine/play()/"
       echo "$script" > "$new_scenario_tmp_path/$machine/play()/run"
 
-echo "$script"
-
+      (cd "$scenario_path/$name/play()" ; find -type d -name files) | while read -r files_path
+      do
+	  mkdir -p "$new_scenario_tmp_path/$(dirname "$files_path")" >> /tmp/debug.log
+	  mv "$scenario_path/$name/play()/$files_path" "$new_scenario_tmp_path/$(dirname "$files_path")" >> /tmp/debug.log
+      done
   fi
 done
 
